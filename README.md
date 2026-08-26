@@ -366,3 +366,12 @@ $B_{dram}=50$ GB/sは評価例であり、隠蔽の成立にはタイル寸法�
 
 > [!NOTE]
 > 公開は特許権や一律の無効効果を発生させるものではなく、先行技術としての効果は公開時期、開示内容、到達可能性、法域および対象クレームごとに判断されます（[JPO](https://www.jpo.go.jp/system/laws/rule/guideline/patent/tukujitu_kijun/ht/03_0200.html)、[WIPO](https://www.wipo.int/en/web/patents/faq_patents)）。本節は法的助言ではありません。
+
+## 10. ライセンス / License
+
+- `reference/`、`rtl/`、`tools/`、`tests/`およびその他のソースコード：
+  [Apache License 2.0](LICENSE)
+- `README.md`の本文およびオリジナル図：
+  [Creative Commons Attribution 4.0 International](LICENSE-DOCUMENTATION.md)
+
+Copyright © 2026 Hiroshi Namiki.
