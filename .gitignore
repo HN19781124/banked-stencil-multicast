@@ -3,3 +3,11 @@ __pycache__/
 .tools/
 .cache/
 build/
+physical/runs/
+tapeout/
+*.gds
+*.oas
+*.odb
+*.def
+*.spef
+*.sdf

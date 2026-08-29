@@ -1,32 +1,97 @@
-# 1Dストリーミング型 複素数データフローアクセラレータ
+# 固定遅延型 1Dストリーミング複素数データフロー・コプロセッサ
 
-> 多バンクSRAMの静的データ配置と、重複窓を排除するマルチキャスト配線を直結した、局所ステンシル／複素数演算向けアクセラレータの構成案。
+> 多バンクSRAMの静的データ配置と、重複窓を排除するマルチキャスト配線を直結した、局所ステンシル／複素数演算向けの公開構成案です。現行の実証結果と、将来の拡張候補を同じリポジトリ内で明確に分離します。
+
+> [!NOTE]
+> `v0.1.0`は初期開示を固定したimmutable releaseです。次回の`v0.2.0`はREADMEと追試証跡を固定するためのタグ／Release名であり、実際のタグ／Releaseを作成して固定した後にこの表記を確定します。内容固定はチップsign-off、製造可能性、または性能保証を意味しません。
 
 | 項目 | 内容 |
 |---|---|
-| ステータス | 中核スケジューラ検証済み／全体は構成案 |
-| バージョン | 0.1 |
-| 文書日 | 2026-08-27 |
+| 現行の事実 | `N=4` lanes／`M=12` single-port banksのreference、RTL、formal、および探索的physical evidence |
+| 文書版 | `v0.2.0`候補（タグ／Release固定後に確定） |
+| 文書日 | 2026-08-29 |
 | 公開目的 | Defensive Publication（第三者による排他的独占の防止） |
 | 作者の方針 | 特許取得・製造・収益化を目的としない |
 
 > [!IMPORTANT]
-> 12-bank／4-wayスケジューラはRTL simulation、形式検証、generic synthesisを通過済みです。複素MAC、SRAMマクロ、DMA、NoCおよび配置配線を含む全チップの検証結果ではありません。
+> 本文の「固定遅延」は、データがオンチップSRAMにあり、規則区間でbackpressureと外部DRAM待ちを除いた決定性レイテンシを指します。DRAM待ち、AXI／FIFO backpressure、prologue／epilogue、未実装のROMBASIC制御層まで含むエンドツーエンド固定遅延は主張しません。
 
-## 概要
+## 読み方：制御／命令面とデータ面
 
-本提案の目的は、1D／局所ステンシル計算および複素数データフロー演算において、次のコストを削減することです。
+制御面は実行する窓、同報、MAC、ストリーム長などのスケジュールを記述し、データ面はそのスケジュールに従ってサンプルを流します。**現行の測定対象はデータ面の`N=4`構成です。** ROMBASICは、CPUから受けた高水準記述を命令列へ展開する将来の制御層であり、現行RTLには実装されていません。
 
-- SRAM内のデータをセル間でシフトするための電力と配線
-- 複数レーンが要求する重複データの多重読み出し
-- 中間結果を外部DRAMへ書き戻す帯域
-- 外部DRAMの待ち時間による演算器の停止
+```mermaid
+flowchart LR
+    subgraph CTRL["制御／命令面（control / instruction plane）"]
+        CPU["CPU／host"]
+        ROM["ROMBASIC macro-instruction expansion layer<br/>（未実装拡張：WINDOW／BROADCAST／MAC／STREAM列生成）"]
+        CFG["descriptor／CSR<br/>固定スケジュール"]
+        CPU --> ROM --> CFG
+    end
 
-中核となる考え方は、**多バンク化したSRAMにデータを静的配置し、1回だけ読み出したユニークなサンプルを、演算器直前の配線網で複数レーンへ同報すること**です。
+    subgraph DATA["データ面（data plane）"]
+        IN["入力ストリーム／DMA境界"] --> SRAM["静的SRAM<br/>現行：12-bank／single-port<br/>セル間シフトなし"]
+        SRAM --> UNIQUE["重複排除したunique samples"]
+        UNIQUE --> MCAST["multicast配線網"]
+        MCAST --> MAC["複素MAC lanes<br/>現行：N=4"]
+        MAC --> OUT["出力FIFO／次段"]
+    end
+
+    CFG -. "窓・長さ・起動条件" .-> SRAM
+    CFG -. "命令列・係数・valid" .-> MAC
+```
+
+ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）は、単なるBASICインタプリタではなく、`WINDOW`／`BROADCAST`／`MAC`／`STREAM`命令列を生成する制御層の**構想**です。これは規則区間の決定性レイテンシを目指す未実装拡張であり、現行の`N=4`実測値には含めません。
+
+## 大規模な規則データで効く理由
+
+- 隣接する`N`レーンと`T` tapの窓は、論理要求`N*T`個に対して`U=N+T-1`個のunique sampleだけを必要とします。
+- SRAMセル間のシフト／再配置をせず、同じサンプルを一度読み出してmulticastするため、重複読み出しとデータ移動を減らせます。
+- `B(x,y)=(x+2y+phase) mod M`のような静的配置と、compile-timeに決めたbank集合により、規則区間のアクセス順序を事前に検査できます。
+- CPU／制御面とデータ面を分けることで、規則区間では命令発行を毎サンプルに介在させず、DMA／DRAMの待ちをバッファ側へ隔離できます。
+
+不規則なアドレス、短い仕事、頻繁な分岐、backpressureが支配的な場合に同じ効果や固定遅延が得られるとは限りません。これは一般的な高速化保証ではなく、規則性の高い局所データフローに対する設計上の利点です。
+
+> [!NOTE]
+> 記号`N`はレーン数、`M`はbank数です。したがって現行の実証は「`N=4`／`M=12`（12-bank baseline）」であり、`N=12`レーンを実証済みとは扱いません。`N=12`レーンは一次試算、`M=12`の実証範囲は現行baselineとして別に記載します。
+
+## 検証の順序：N=4実測 → N=6／N=16試算 → 検証境界
+
+### 1. N=4／M=12：現行の実測・証跡
+
+現行baselineは、`T=3`、4 lanes、12 single-port banks、6 unique reads／cycleを用います。4レーンのend-to-end reference RTLでは、入力・window・multicast・MAC・outputの段を再生でき、`nostall`時の定常出力間隔は3 cycleです。物理runはSKY130の4 MHz探索であり、hold／antenna／SRAM内部sign-offを閉じたチップではありません。
+
+| 面 | 現行baselineで確認した範囲 | 根拠 |
+|---|---|---|
+| reference／schedule | 6 read＋4 writeのbank集合、両buffer方向、行端／Haloの境界 | [`reference/bank_schedule.py`](reference/bank_schedule.py)、[`reference/peripheral_schedule.py`](reference/peripheral_schedule.py)、[`tools/verify.py`](tools/verify.py) |
+| RTL／formal | 同期1-port SRAM、6→4×3 multicast、複素MAC、FIFO／CSR／MBIST、bank conflict SAT | [`rtl/banked_stencil_engine.sv`](rtl/banked_stencil_engine.sv)、[`rtl/tb_banked_stencil_engine.sv`](rtl/tb_banked_stencil_engine.sv)、[`rtl/tb_banked_stencil_path.sv`](rtl/tb_banked_stencil_path.sv)、[`VALIDATION.md`](VALIDATION.md) |
+| physical | 4 MHz制約での探索的到達性。100 MHz sign-offやSRAM内部sign-offは未完了 | [`physical/evidence/RTL-PERFORMANCE-REPORT.md`](physical/evidence/RTL-PERFORMANCE-REPORT.md)、[`physical/evidence/PHYSICAL-VERIFICATION-REPORT.md`](physical/evidence/PHYSICAL-VERIFICATION-REPORT.md) |
+
+### 2. N=6／M=16：一次試算（未実装の展望）
+
+`T=3`、single-port、連続窓、同一行、ping-pongという前提では、`U=N+T-1=8`、`M=2U=16`、read=8、write=6、phase差=8です。理想出力率は4-lane比1.5倍ですが、配線、SRAM macro、物理タイミング、電力を含むN=6 RTL／physical結果ではありません。行幅のpadや帯域は、入力幅とtile境界を明示した上で別途計算します。
+
+### 3. N=16／M=36：数学的導出（未実装の展望）
+
+同じ`T=3`、single-port、連続窓、ping-pong、同一行の前提で、`U=18`、`M=36`、phase差=18です。読み出し集合を連続18 bank、書き込み集合をその半周後の連続16 bankとすれば、`R_t∩W_t=∅`であり、buffer役割を交換しても同じ半周差が保たれます。これは無衝突条件の数学的導出であって、16-lane RTL、formal、backpressure、配線、P&R、実測性能の証明ではありません。候補の数値と検証ゲートは[設計空間試算資料](docs/13-design-space-exploration.md)と[候補JSON](manufacturing/candidate-n16.json)に分離します。
+
+### 4. 検証境界
+
+| 分類 | このリポジトリでの位置づけ | 主張しないこと |
+|---|---|---|
+| **検証済み** | `N=4`／`M=12`のreference／RTL／formal、43 Python tests、複素MAC 256 vectors、FIFO／CSR／MBIST、基準engine性能、SKY130 4 MHz探索run | `N=6`／`N=12`／`N=16`の実装性能、100 MHz全corner、製造sign-off |
+| **一次試算** | `N=6`／`N=12`／`N=16`の容量・帯域・重複削減・endpoint・理想MAC、`N=16`の制約付き候補選定、idle bankの均熱／gating余地 | 実配線遅延、実電力、実面積、SRAM macroの動作余裕 |
+| **未検証** | N-way parameterized RTL／formal、直接配線とpyramidの比較、外部DMA／NoC、gate-level、qualified SRAM、実機、idle bankの温度・電力効果 | 数値を製品保証や一意の最適解として扱うこと |
 
 ## English abstract
 
-This document proposes a streaming accelerator for complex-valued local-stencil workloads. Complex FP16 samples are statically distributed across skew-addressed, single-port SRAM banks; unique samples are read once and multicast directly to overlapping compute lanes. The baseline example uses 12 banks, four lanes, a three-point stencil, and six unique reads per cycle. Conflict-free prefetch writes, physical timing, power, area, and large-scale multicast remain implementation-dependent and require RTL and physical-design validation.
+This repository describes a **programmable streaming coprocessor outlook** for complex-valued local-stencil workloads. The measured baseline is a 12-bank, four-lane, three-tap data path: complex FP16 samples are statically distributed across skew-addressed single-port SRAM banks, unique samples are read once, and the values are multicast to overlapping compute lanes. The baseline evidence covers reference, RTL, formal, and exploratory physical runs; it does not claim a tapeout-ready chip.
+
+“Fixed latency” means deterministic latency only inside a regular in-SRAM streaming region, excluding external DRAM waits and backpressure. `N=6` and `N=16` are estimate／derivation targets, not measured implementations. The **ROMBASIC macro-instruction expansion layer** is a future, unimplemented control-plane extension that would generate `WINDOW`／`BROADCAST`／`MAC`／`STREAM` instruction sequences.
+
+### Technical construction details
+
+The following equations and examples retain the concrete construction from the initial disclosure. Conflict-free prefetch writes beyond the bounded `N=4` schedule, physical timing, power, area, and large-scale multicast remain implementation-dependent and require RTL and physical-design validation.
 
 ### Core construction
 
@@ -46,30 +111,57 @@ Here, $M$ is the number of single-port banks, $W_p$ is a padded row width divisi
 
 ### Concrete four-lane embodiment
 
-Four adjacent three-tap lanes logically request 12 samples per issue, but their union contains only six consecutive samples. The baseline uses $M=12$, buffer phases $\phi_A=0$ and $\phi_B=6$, six reads from the active buffer, and four prefetch writes to the opposite buffer. The two access sets are disjoint in every steady-state cycle; swapping the read and write buffers preserves the same half-ring phase separation. The six samples are routed so that Lane $j$ receives $(s_j,s_{j+1},s_{j+2})$.
+Four adjacent three-tap lanes logically request 12 samples per issue, but their union contains only six consecutive samples. The `N=4`／`M=12` reference schedule uses buffer phases $\phi_A=0$ and $\phi_B=6$, six reads from the active buffer, and four prefetch writes to the opposite buffer. The two access sets are disjoint in the reference schedule; swapping the read and write buffers preserves the same half-ring phase separation. The six samples are routed so that Lane $j$ receives $(s_j,s_{j+1},s_{j+2})$.
 
 ### Scalable embodiment
 
-For $N\ge1$ adjacent lanes and a contiguous $T$-tap stencil, the number of unique reads is $U=N+T-1$. A symmetric conflict-free ping-pong family is obtained with $M=2U$ single-port banks and phases $\phi_A=0$, $\phi_B=U$. The repository tests both buffer directions for $N=1,2,4,8,16,32$ with $T=3$. The $N=4$ member is exactly the 12-bank baseline; $N=0$ denotes an idle or power-gated state rather than a compute configuration.
+For $N\ge1$ adjacent lanes and a contiguous $T$-tap stencil, the number of unique reads is $U=N+T-1$. A symmetric conflict-free ping-pong family is obtained with $M=2U$ single-port banks and phases $\phi_A=0$, $\phi_B=U$. The repository can enumerate this family at reference level for $N=1,2,4,8,16,32$ with $T=3$; those algebraic／schedule checks are not N-way RTL or physical measurements. The $N=4$ member is exactly the 12-bank measured baseline; $N=0$ denotes an idle or power-gated state rather than a compute configuration.
 
-### Extension candidates
+### Extension candidates (appendix outlook only)
 
-The same unit may be extended horizontally as distributed-memory clusters with direct halo exchange, vertically as cascaded pipeline stages that forward intermediate results without external-DRAM writeback, and globally through a buffered hierarchical multicast or NoC re-broadcast tree. These are disclosed architectural extensions, not validated claims of constant-frequency arbitrary-$N$ scaling or one-cycle full Self-Attention.
+Horizontal distributed-memory clusters, vertical cascaded stages, and global direct／pyramidal／NoC re-broadcast are described in [Appendix A](#付録a-多次元への拡張候補展望). They are connection-topology candidates in this repository, not current implementations. Only the bounded `N=4` configuration is treated as measured; exploratory attention and feedback concepts remain outside the verified baseline.
 
 ### Verification boundary
 
-The bank scheduler has passed Python reference tests, exhaustive RTL simulation of its 36 periodic states, Yosys SAT proof of zero read/write conflicts for all scheduler inputs, and generic synthesis checks. This verifies the scheduler construction, not a complete chip. Complex MAC arithmetic, compiled SRAM macros, DMA, NoC, timing closure, physical fan-out, power, and full multidimensional scaling remain outside the verified implementation.
+The repository has passed 43 Python tests, exhaustive RTL simulation of the `N=4` scheduler's 36 periodic states, Yosys SAT proof of zero read/write conflicts, 256 bit-exact complex-MAC vectors, randomized FIFO backpressure, CSR/MBIST tests, end-to-end reference-RTL simulation, and generic synthesis checks. A SKY130 physical experiment reached a routable state at a 4 MHz constraint, but did not close hold timing, antenna, or SRAM-internal sign-off. `N=6`／`N=12`／`N=16` implementations, external DMA／NoC, gate-level verification, production timing／power, and full multidimensional scaling remain outside the measured baseline.
 
-**Keywords:** banked SRAM, skewed banking, streaming stencil, overlap elimination, multicast, complex MAC, ping-pong buffer, dataflow accelerator, halo exchange, hierarchical multicast.
+**Keywords:** banked SRAM, skewed banking, streaming stencil, overlap elimination, multicast, complex MAC, ping-pong buffer, dataflow accelerator, fixed-latency region, programmable coprocessor, halo exchange, pyramidal multicast.
 
 ## クイック検証
 
 ```shell
 python tools/verify.py
-python tools/verify.py --bootstrap
+python tools/verify.py --bootstrap --require-rtl
+python tools/measure_performance.py --report physical/evidence/rtl-performance-report-20260829.json
+python tools/explore_design_space.py --json build/design-space-report.json --csv build/design-space-report.csv
 ```
 
-1行目はPython検証のみ、2行目は固定版の[YosysHQ OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build)（約0.5〜0.75 GB）をSHA-256照合後にuser cacheへ展開し、RTL simulation、形式検証、generic synthesisまで実行します。結果は `build/verification-report.json` に保存されます。
+1行目はPython検証のみ、2行目は固定版の[YosysHQ OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build)（約0.5〜0.75 GB）をSHA-256照合後にuser cacheへ展開し、RTL simulation、形式検証、generic synthesisまで必須実行します。3行目は基準engineの無ストール／backpressure性能と段別サイクルを測定し、4行目はN-way候補の一次試算を行います。結果は `build/verification-report.json` または[RTL性能レポート](physical/evidence/RTL-PERFORMANCE-REPORT.md)に保存し、GPUの段別rooflineは[比較レポート](physical/evidence/GPU-COMPARISON-REPORT.md)に分離しています。
+
+## 詳細：試算と次の検証候補
+
+候補の「最適」は目的関数と予算を固定しない限り一意ではありません。`tools/explore_design_space.py` は、同じ一次モデルで`N`レーン候補を掃引し、容量・オンチップ帯域・重複削減率・multicast endpoint・理想MAC性能を出力します。既定の設計 envelope（`T=3`、4 byte/sample、100 MHz、A/B合計144 KiB以下、endpoint 48以下、削減率60%以上）では、**N=16／36 bank／18 unique read／16 write**が最大の実行可能候補になります。
+
+| 候補 | unique read | bank | 容量 | read / 合計帯域 | 重複削減 | serialized / unrolled（100 MHz） |
+|---:|---:|---:|---:|---:|---:|---:|
+| N=4（実測基準） | 6 | 12 | 48 KiB | 2.4 / 4.0 GB/s | 50.0% | 3.2 / 9.6 GFLOP/s |
+| [N=12（一次試算）](docs/13-design-space-exploration.md) | 14 | 28 | 112 KiB | 5.6 / 10.4 GB/s | 61.1% | 9.6 / 28.8 GFLOP/s |
+| **N=16（数学的導出・次の検証候補）** | **18** | **36** | **144 KiB** | **7.2 / 13.6 GB/s** | **62.5%** | **12.8 / 38.4 GFLOP/s** |
+| N=24（一次試算・予算超過） | 26 | 52 | 208 KiB | 10.4 / 20.0 GB/s | 63.9% | 19.2 / 57.6 GFLOP/s |
+
+N=16は最終最適という意味ではなく、基準の3倍容量と48 endpointの境界に置く、尖った比較用ターゲットです。基準N=4のRTLレポート（read 2.4、write 1.6、合計4.0 GB/s／serialized 3.2 GFLOP/s）と一次モデルが一致することを校正に使います。N=16の性能値は未検証であり、**36-bankスケジュール、16-lane RTL、直接配線／buffered pyramidのmulticast等価性、formal、backpressure、同一制約のP&R比較**を順に実施します。前提とゲートは[設計空間試算資料](docs/13-design-space-exploration.md)、機械可読な候補定義は[候補JSON](manufacturing/candidate-n16.json)に固定しています。
+
+3 tapの対称bank familyでは毎cycle 2 bankが休止します。この休止bankは均熱やclock／power gatingに割り当てられる余地がありますが、温度・電力への効果は未測定です。
+
+### 証拠の分類
+
+| 分類 | このリポジトリで該当するもの | 含意しないもの |
+|---|---|---|
+| **検証済み** | N=4のschedule／RTL／formal、43 Python tests、複素MAC 256 vectors、FIFO／CSR／MBIST、基準engine性能、SKY130 4 MHz探索runの到達性 | N=16のRTL性能、100 MHz全corner、製造sign-off |
+| **一次試算** | N=1..32の容量・帯域・重複削減・multicast endpoint・理想MAC、N=16の制約付き選定、基準実測との換算校正、休止2 bankの均熱／gating余地 | 配線遅延、実電力、実面積、macroの動作余裕 |
+| **未検証** | N=16のparameterized RTL／formal、直接配線とpyramidの比較、外部DMA／NoC、gate-level、qualified SRAM、実機、休止bankの温度・電力効果 | 数値を製品保証や一意の最適解として扱うこと |
+
+## 詳細仕様
 
 ## 1. 基本アーキテクチャ
 
@@ -236,7 +328,25 @@ $$
 | 8 | 24 | 10 | 8 | 20 | 2 |
 | $N$ | $3N$ | $N+2$ | $N$ | $2N+4$ | 2 |
 
-1-wayは重複共有を持たない最小実施形態、2-way以上は隣接窓の共有による読み出し圧縮を持つ実施形態です。`reference/bank_schedule.py` は $N=1,2,4,8,16,32$ の両ping-pong方向を検証します。12-bank／4-way構成は、この一般式の $N=4,T=3$ に一致します。
+### 2.8 N=6／N=16バンク拡張案（展望）
+
+基準の12-bank／4-wayを変更せず、比較用の拡張案として6レーン・16バンクを定義します。$N=6$では
+
+$$
+U=N+2=8,\qquad M=2U=16,\qquad \text{read}=8,\qquad \text{write}=6
+$$
+
+同一クロックでSRAM帯域が十分なら、4-way基準に対する理想的な出力率は $6/4=1.5$ 倍です。$W$ を出力点の幅（sample数）とし、6レーン単位でtile化して3 tapのHaloを加える場合、16 bank境界へ丸めた行幅（sample数）は
+
+$$
+W_p=16\left\lceil\frac{6\lceil W/6\rceil+2}{16}\right\rceil
+$$
+
+（4 byte/sampleなら行の格納量は $4W_p$ byte）です。このパディング、物理タイミング、配線、電力を含めて評価します。本案はREADME上の設計提案であり、基準RTL・formal・物理検証の結果には含めません。実装時は基準と独立した構成として全検証を再実行します。
+
+同じ前提で$N=16$は$U=18$、$M=36$、phase差$=18$となります。これは読み出し18 bankと書き込み16 bankの集合を半周ずらして無衝突にできるという数学的導出であり、16-lane RTL／physical実測ではありません。
+
+1-wayは重複共有を持たない最小実施形態、2-way以上は隣接窓の共有による読み出し圧縮を持つ実施形態です。`reference/bank_schedule.py` は $N=1,2,4,8,16,32$ の両ping-pong方向をreference levelで確認します。12-bank／4-way構成は、この一般式の $N=4,T=3$ に一致します。
 
 ## 3. 演算レーン
 
@@ -253,16 +363,17 @@ $$
 
 ## 4. マルチキャスト網
 
-SRAMから読み出した6サンプルを、各レーンが必要とする入力ポートへ配信します。4レーン程度では直接分岐も候補ですが、レーン数を増やす場合は次の構成を想定します。
+SRAMから読み出した6サンプルを、各レーンが必要とする入力ポートへ配信します。同報の論理機能を保つ限り、物理接続は次のいずれでも構成できます。
 
-- バッファ付き配線ツリー
+- 小～中規模では16本等の専用配線による直接接続
+- 局所クラスタから上位クラスタへ集約・分配するピラミッド型配線ツリー
 - レジスタ挿入によるパイプライン化
-- 複数クラスタへの階層型マルチキャスト
+- 複数クラスタへのNoC multicast
 - クロック領域／電圧領域をまたぐ場合の明示的なブリッジ
 
-レーン数を任意の $N$ へ拡張できるのは**論理構造上**の性質です。実際の上限は配線遅延、fan-out、消費電力、クロック、面積によって決まります。
+直接配線は小規模で単純かつ確実な実施形態、ピラミッド型は大規模化時の配線長・fan-out・容量負荷を分割する実施形態です。階層へレジスタを入れる場合は段数分のレイテンシが増えますが、配送される値と宛先は変わりません。この式はパラメータ化された候補群を表すもので、未評価の大きなレーン数で一定クロックを維持することを保証しません。実際の上限は配線遅延、消費電力、クロック、面積によって決まります。
 
-## 5. 多次元への拡張候補
+## 付録A. 多次元への拡張候補（展望）
 
 ```mermaid
 flowchart TD
@@ -279,8 +390,8 @@ flowchart TD
         U3[1D Unit 3]
     end
 
-    subgraph G[階層型2D再同報網]
-        TREE{Global Multicast Tree}
+    subgraph G[ピラミッド型2D再同報網]
+        TREE{Buffered Multicast Tree}
     end
 
     IN --> U0
@@ -293,7 +404,7 @@ flowchart TD
     TREE -.-> U1
 ```
 
-### 5.1 横方向：分散メモリ型メニコア
+### A.1 横方向：分散メモリ型メニコア
 
 1Dユニットを横に並べ、タイルを分担します。
 
@@ -304,15 +415,31 @@ flowchart TD
 
 「各ユニットに局所DRAMを持つ」構成は、外付けDRAM、積層DRAM、eDRAM、共有DRAMの論理分割など複数の実装候補を含みます。DRAMを各ユニットと同一ダイ上に置けることを前提にはしません。
 
-### 5.2 縦方向：カスケード型パイプライン
+### A.2 縦方向：カスケード型パイプライン
 
 前段ユニットの出力を外部DRAMへ書き戻さず、次段ユニットの入力SRAMまたはFIFOへ直接転送します。中間結果の外部帯域を削減できますが、段ごとの処理量が異なる場合はバッファ容量とバックプレッシャ制御が必要です。
 
-### 5.3 2D再同報
+### A.3 2D再同報
 
-複数クラスタで共有する特徴量を階層型ネットワークで再配信する構想です。単一の巨大な全域バスではなく、物理距離に応じて分割された配信ツリーまたはNoC multicastを基本候補とします。
+複数クラスタで共有する特徴量を再配信する構想です。16本等の専用線で直接接続する構成と、物理距離に応じて局所→上位へ分割するピラミッド型配信ツリー／NoC multicastを、規模に応じて選択できます。これは演算方式ではなく接続トポロジーの選択です。
 
-再同報網はSelf-AttentionにおけるKey／Value等の配信を支援できますが、**任意サイズのSelf-Attention全体を1 cycleで完了させることを意味しません**。全相関計算には問題サイズに応じた演算器数、$O(N^2)$規模のデータ交換、リダクション、Softmax等が必要です。
+再同報網は特徴量を複数クラスタへ配信する接続候補です。基準外の用途や大規模な相関処理は本文の検証範囲に含めず、探索的なメモとして付録へ分離しています。
+
+基準外の接続・フィードバック・大規模レーン数のメモは[探索的な拡張付録](docs/concepts/rombasic-gpu-integration.md#4-さらに探索的な拡張本文の検証範囲外)に置いています。
+
+### A.4 3Dステンシルへのロードマップ
+
+3D化は、まず奥行き方向のスライスを1Dユニットへ直列投入する実装を基準にします。既存のバンクスケジュール、Halo交換、MACを再利用できるため、機能検証と面積見積もりを小さく始められます。
+
+次段階では、隣接スライスのHalo面を直接配線またはピラミッド型マルチキャストツリーで共有します。ツリーの階層化は配線負荷を分割しますが、SRAM帯域、バッファ深さ、各段の遅延と電力は独立に検証する必要があります。
+
+実装順序は、(1) 3D座標・HaloのPython参照モデル、(2) 直列3D RTLとformal、(3) スライス間ツリーRTL、(4) 16／32バンクへの物理配置・配線・電力評価、とします。各段階でバンク衝突、FIFOバックプレッシャ、fan-out、タイミングを再検証します。
+
+## 付録B. ROMBASICマクロ命令展開層（未実装拡張）
+
+ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）は、CPU／hostから受けた記述を`WINDOW`／`BROADCAST`／`MAC`／`STREAM`命令列へ展開する制御面の将来候補です。規則区間の決定性レイテンシを目指しますが、現行の`N=4`データ面、reference、RTL、formal、physical evidenceには含まれません。
+
+命令形式、GPU連携、自己注意やフィードバックを含む探索的な接続案は、[ROMBASIC／GPU統合の参考案](docs/concepts/rombasic-gpu-integration.md)に置きます。これらは実装済み機能、性能値、またはチップ sign-offを意味しません。
 
 ## 6. DRAM待ち時間の隠蔽
 
@@ -335,13 +462,19 @@ $B_{dram}=50$ GB/sは評価例であり、隠蔽の成立にはタイル寸法�
 完了済み：
 
 - [x] 12-bank／4-wayの定常無衝突scheduleとバンク内アドレス一意性
-- [x] 1／2／4／8／16／32-way一般式の両ping-pong方向（Python 12テスト）
+- [x] 1／2／4／8／16／32-way一般式の両ping-pong方向をreference levelで列挙（全Python 43テスト。N-way RTL／physical実測ではない）
 - [x] 全36周期状態のRTL simulation
 - [x] 全入力状態のYosys SAT無衝突証明
 - [x] generic synthesis、latch不在、構造check
 - [x] SHA-256検証付きtoolchain bootstrapとJSON report生成
+- [x] 複素MAC／FP16の256-vector bit-exact RTL
+- [x] FIFO／AXI-Lite CSR／MBIST／製品統合RTL
+- [x] 固定OpenLaneコンテナで24/24 checks PASS
+- [x] 基準engineの無ストール／backpressure RTL性能測定（3 cycle/output beat）
+- [x] load／window／multicast／MAC／outputの段別サイクル計測
+- [x] GPU同条件の段別roofline比較（公開仕様、実機未測定）
 
-未検証なのは、行端／Halo、異なる行の同時アクセス、複素MACとSRAMを含む統合RTL、FP16数値規則、PDK依存のSTA／配置配線／電力、DRAM／DMAおよびNoCです。これらと実機製造は、本Defensive Publicationの完成条件には含めません。
+未完なのは、qualified SRAM macroの内部sign-off、外部DMA／NoC、CDC／scan／gate-level、PDK依存の全corner STA／電力、およびGDS/SRAM内部のDRC/LVSです。これらと実機製造は、本Defensive Publicationの完成条件には含めません。
 
 ## 8. 公開範囲と制約
 
@@ -350,15 +483,16 @@ $B_{dram}=50$ GB/sは評価例であり、隠蔽の成立にはタイル寸法�
 1. スキュー配置された多バンク・スタティックメモリ
 2. 隣接ステンシル窓の重複を除去する読み出しスケジュール
 3. ユニークな読み出しデータを複数演算レーンへ直接配信するマルチキャスト網
-4. 横方向のHalo交換、縦方向のカスケード、階層型の再同報への拡張
+4. 横方向のHalo交換、縦方向のカスケード、階層型の再同報への拡張（将来の接続トポロジー候補）
 
 一方、次の事項は検証済みの性能保証ではありません。
 
-- 任意の $N$ で一定クロックを維持できること
+- レーン数を増やしても一定クロックを維持できること
 - すべての読み書きパターンで無条件にバンク衝突がないこと
 - 外部DRAM待ち時間を常に完全隠蔽できること
-- 任意サイズのSelf-Attentionを1 cycleで完了できること
-- 動的に最適解へ収束すること
+- 基準外の大規模相関処理をこの網だけで完了できること
+- 未定義のフィードバック接続が最適解へ収束すること
+- ROMBASICマクロ命令展開層が実装済みであること
 
 ## 9. Defensive Publicationについて
 
@@ -371,7 +505,8 @@ $B_{dram}=50$ GB/sは評価例であり、隠蔽の成立にはタイル寸法�
 
 - `reference/`、`rtl/`、`tools/`、`tests/`およびその他のソースコード：
   [Apache License 2.0](LICENSE)
-- `README.md`の本文およびオリジナル図：
+- `README.md`、`VALIDATION.md`、`docs/`および検証レポート：
   [Creative Commons Attribution 4.0 International](LICENSE-DOCUMENTATION.md)
+- 引用情報：[`CITATION.cff`](CITATION.cff)
 
 Copyright © 2026 Hiroshi Namiki.

@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this defensive-publication specification or its verification artifacts, please cite this repository."
+title: "Banked Stencil Multicast"
+type: software
+authors:
+  - family-names: Namiki
+    given-names: Hiroshi
+version: "0.1.0"
+date-released: 2026-08-27
+repository-code: "https://github.com/HN19781124/banked-stencil-multicast"
+url: "https://github.com/HN19781124/banked-stencil-multicast"
+abstract: >-
+  Defensive publication of a banked-SRAM streaming accelerator for local
+  stencil and complex-valued dataflow workloads, with executable Python,
+  SystemVerilog, formal, and exploratory physical-design verification.
+keywords:
+  - banked SRAM
+  - streaming stencil
+  - multicast
+  - complex MAC
+  - defensive publication
+  - prior art
+license: "Apache-2.0 AND CC-BY-4.0"

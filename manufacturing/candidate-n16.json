@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "candidate_id": "NB2-SMA-N16-T3",
+  "status": "exploration-target",
+  "derived_from": "NB2-SMA-01-MB1",
+  "purpose": "next RTL/formal/physical comparison target; not a tapeout baseline",
+  "architecture": {
+    "lanes": 16,
+    "taps": 3,
+    "unique_reads_per_issue": 18,
+    "prefetch_writes_per_cycle": 16,
+    "single_port_banks": 36,
+    "phase_a": 0,
+    "phase_b": 18,
+    "idle_banks_per_cycle": 2,
+    "idle_bank_opportunity": "thermal spreading and clock/power gating; effect unmeasured",
+    "multicast_endpoints": 48,
+    "multicast_topologies": [
+      "direct-dedicated-links",
+      "buffered-pyramidal-tree"
+    ]
+  },
+  "sizing_assumptions": {
+    "sample_bytes": 4,
+    "bank_depth_words_total_ab": 1024,
+    "clock_target_mhz_for_first_order_estimate": 100,
+    "capacity_kib_total_ab": 144,
+    "serialized_mac_model": "one tap MAC per lane per cycle",
+    "unrolled_mac_model": "three tap MACs per lane per cycle",
+    "complex_mac_real_flops": 8
+  },
+  "verification_gates": [
+    "reference schedule both ping-pong directions and multiple rows",
+    "parameterized 36-bank single-port RTL",
+    "direct versus pyramidal multicast equivalence",
+    "serialized and unrolled throughput with FIFO backpressure",
+    "formal conflict/address/FIFO/reset properties",
+    "same-constraint physical comparison and fan-out report"
+  ]
+}

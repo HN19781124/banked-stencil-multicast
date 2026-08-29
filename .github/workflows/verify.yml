@@ -1,0 +1,39 @@
+name: verify
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verification:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run software and RTL verification
+        run: python tools/verify.py --bootstrap --require-rtl
+      - name: Run analytical design-space sweep
+        run: python tools/explore_design_space.py --json build/design-space-report.json --csv build/design-space-report.csv
+      - name: Upload verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-report
+          path: build/verification-report.json
+          if-no-files-found: error
+      - name: Upload design-space report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-space-report
+          path: |
+            build/design-space-report.json
+            build/design-space-report.csv
+          if-no-files-found: error

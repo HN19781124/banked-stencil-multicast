@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "baseline_id": "NB2-SMA-01-MB1",
+  "product_name": "Banked Stencil Multicast Accelerator",
+  "product_type": "manufacturing-reference IP block",
+  "release_status": "pre-tapeout",
+  "data_format": {
+    "sample_bits": 32,
+    "real_format": "IEEE-754 binary16",
+    "imag_format": "IEEE-754 binary16",
+    "accumulator_format": "IEEE-754 binary32",
+    "rounding": "roundTiesToEven"
+  },
+  "architecture": {
+    "lanes": 4,
+    "taps": 3,
+    "banks": 12,
+    "bank_ports": 1,
+    "bank_word_bits": 32,
+    "bank_depth_words": 1024,
+    "input_stream_bits": 128,
+    "output_stream_bits": 128,
+    "control_bus": "AXI4-Lite 32-bit",
+    "stream_bus": "AXI4-Stream"
+  },
+  "implementation": {
+    "clock_target_mhz": 100,
+    "reset": "asynchronous assert, synchronous deassert",
+    "power_domains": 1,
+    "clock_gating": true,
+    "power_gating": false,
+    "prototype_pdk": "sky130A",
+    "prototype_standard_cell_library": "sky130_fd_sc_hd",
+    "production_pdk": "foundry-qualified PDK required"
+  },
+  "scope": {
+    "halo_policy": "host supplies padded rows and halo samples",
+    "cross_row_policy": "serialize or insert a transition bubble",
+    "runtime_ecc": false,
+    "sram_mbist": true,
+    "scan": true,
+    "noc": "outside baseline; AXI wrapper boundary only"
+  }
+}

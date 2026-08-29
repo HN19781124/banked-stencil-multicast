@@ -95,6 +95,16 @@ def main() -> int:
             [sys.executable, "-B", "reference/bank_schedule.py"],
         ),
     ]
+    vector_check = run_check(
+        "complex-mac-vector-generation",
+        [sys.executable, "-B", "tools/generate_mac_vectors.py"],
+    )
+    checks.append(vector_check)
+    engine_vector_check = run_check(
+        "engine-vector-generation",
+        [sys.executable, "-B", "tools/generate_engine_vectors.py"],
+    )
+    checks.append(engine_vector_check)
 
     suite = find_suite()
     if not suite and arguments.bootstrap:
@@ -128,6 +138,177 @@ def main() -> int:
         )
         if checks[-1]["status"] == "PASS":
             checks.append(run_check("rtl-simulation", [str(vvp), str(simulation_image)], environment))
+        integration_image = build_directory / "banked_stencil_path_tb.vvp"
+        checks.append(
+            run_check(
+                "integration-rtl-compile",
+                [
+                    str(iverilog),
+                    "-g2012",
+                    "-Wall",
+                    "-s",
+                    "tb_banked_stencil_path",
+                    "-o",
+                    str(integration_image),
+                    "rtl/bank_scheduler.sv",
+                    "rtl/stencil_multicast.sv",
+                    "rtl/tb_banked_stencil_path.sv",
+                ],
+                environment,
+            )
+        )
+        if checks[-1]["status"] == "PASS":
+            checks.append(
+                run_check(
+                    "integration-rtl-simulation",
+                    [str(vvp), str(integration_image)],
+                    environment,
+                )
+            )
+        complex_mac_image = build_directory / "complex_stencil_mac_tb.vvp"
+        checks.append(
+            run_check(
+                "complex-mac-rtl-compile",
+                [
+                    str(iverilog),
+                    "-g2012",
+                    "-Wall",
+                    "-s",
+                    "tb_complex_stencil_mac",
+                    "-o",
+                    str(complex_mac_image),
+                    "rtl/stencil_multicast.sv",
+                    "rtl/fp16_fma_accumulator.sv",
+                    "rtl/fp32_to_fp16_rne.sv",
+                    "rtl/complex_stencil_mac.sv",
+                    "rtl/tb_complex_stencil_mac.sv",
+                ],
+                environment,
+            )
+        )
+        if checks[-1]["status"] == "PASS" and vector_check["status"] == "PASS":
+            checks.append(
+                run_check(
+                    "complex-mac-rtl-simulation",
+                    [str(vvp), str(complex_mac_image)],
+                    environment,
+                )
+            )
+        axis_fifo_image = build_directory / "axis_fifo_tb.vvp"
+        checks.append(
+            run_check(
+                "axis-fifo-rtl-compile",
+                [
+                    str(iverilog), "-g2012", "-Wall", "-s", "tb_axis_fifo",
+                    "-o", str(axis_fifo_image),
+                    "rtl/axis_fifo.sv", "rtl/tb_axis_fifo.sv",
+                ],
+                environment,
+            )
+        )
+        if checks[-1]["status"] == "PASS":
+            checks.append(
+                run_check(
+                    "axis-fifo-rtl-simulation",
+                    [str(vvp), str(axis_fifo_image)],
+                    environment,
+                )
+            )
+        csr_image = build_directory / "axi_lite_csr_tb.vvp"
+        checks.append(
+            run_check(
+                "axi-lite-csr-rtl-compile",
+                [
+                    str(iverilog), "-g2012", "-Wall", "-s", "tb_axi_lite_csr",
+                    "-o", str(csr_image),
+                    "rtl/axi_lite_csr.sv", "rtl/tb_axi_lite_csr.sv",
+                ],
+                environment,
+            )
+        )
+        if checks[-1]["status"] == "PASS":
+            checks.append(
+                run_check(
+                    "axi-lite-csr-rtl-simulation",
+                    [str(vvp), str(csr_image)],
+                    environment,
+                )
+            )
+        mbist_image = build_directory / "sram_mbist_tb.vvp"
+        checks.append(
+            run_check(
+                "sram-mbist-rtl-compile",
+                [
+                    str(iverilog), "-g2012", "-Wall", "-s", "tb_sram_mbist",
+                    "-o", str(mbist_image),
+                    "rtl/single_port_sram.sv", "rtl/sram_mbist.sv",
+                    "rtl/tb_sram_mbist.sv",
+                ],
+                environment,
+            )
+        )
+        if checks[-1]["status"] == "PASS":
+            checks.append(
+                run_check(
+                    "sram-mbist-rtl-simulation",
+                    [str(vvp), str(mbist_image)],
+                    environment,
+                )
+            )
+        product_sources = [
+            "rtl/reset_synchronizer.sv",
+            "rtl/axis_fifo.sv",
+            "rtl/axi_lite_csr.sv",
+            "rtl/bank_scheduler.sv",
+            "rtl/single_port_sram.sv",
+            "rtl/sram_mbist.sv",
+            "rtl/stencil_multicast.sv",
+            "rtl/fp16_fma_accumulator.sv",
+            "rtl/fp32_to_fp16_rne.sv",
+            "rtl/complex_stencil_mac.sv",
+            "rtl/banked_stencil_engine.sv",
+        ]
+        engine_image = build_directory / "banked_stencil_engine_tb.vvp"
+        checks.append(
+            run_check(
+                "engine-rtl-compile",
+                [
+                    str(iverilog), "-g2012", "-Wall", "-s",
+                    "tb_banked_stencil_engine", "-o", str(engine_image),
+                    *product_sources[1:], "rtl/tb_banked_stencil_engine.sv",
+                ],
+                environment,
+            )
+        )
+        if checks[-1]["status"] == "PASS" and engine_vector_check["status"] == "PASS":
+            checks.append(
+                run_check(
+                    "engine-rtl-simulation",
+                    [str(vvp), str(engine_image)],
+                    environment,
+                )
+            )
+        product_image = build_directory / "banked_stencil_accelerator_tb.vvp"
+        checks.append(
+            run_check(
+                "product-rtl-compile",
+                [
+                    str(iverilog), "-g2012", "-Wall", "-s",
+                    "tb_banked_stencil_accelerator", "-o", str(product_image),
+                    *product_sources, "rtl/banked_stencil_accelerator.sv",
+                    "rtl/tb_banked_stencil_accelerator.sv",
+                ],
+                environment,
+            )
+        )
+        if checks[-1]["status"] == "PASS" and engine_vector_check["status"] == "PASS":
+            checks.append(
+                run_check(
+                    "product-rtl-simulation",
+                    [str(vvp), str(product_image)],
+                    environment,
+                )
+            )
         checks.append(
             run_check(
                 "yosys-formal-and-synthesis",
@@ -143,6 +324,58 @@ def main() -> int:
                 environment,
             )
         )
+        checks.append(
+            run_check(
+                "yosys-multicast-synthesis",
+                [
+                    str(yosys),
+                    "-p",
+                    (
+                        "read_verilog -sv rtl/stencil_multicast.sv; "
+                        "prep -top stencil_multicast; check; stat"
+                    ),
+                ],
+                environment,
+            )
+        )
+        checks.append(
+            run_check(
+                "yosys-complex-mac-synthesis",
+                [
+                    str(yosys),
+                    "-p",
+                    (
+                        "read_verilog -sv rtl/fp16_fma_accumulator.sv "
+                        "rtl/fp32_to_fp16_rne.sv rtl/complex_stencil_mac.sv; "
+                        "prep -top complex_stencil_mac; check; stat"
+                    ),
+                ],
+                environment,
+            )
+        )
+        top_log = build_directory / "top-synthesis-check.log"
+        top_check = run_check(
+            "yosys-product-structural-synthesis",
+            [
+                str(yosys),
+                "-q",
+                "-l",
+                str(top_log),
+                "-p",
+                (
+                    "read_verilog -sv "
+                    + " ".join(product_sources)
+                    + " rtl/banked_stencil_accelerator.sv; "
+                    "prep -top banked_stencil_accelerator; check; stat"
+                ),
+            ],
+            environment,
+        )
+        prohibited = ("Latch inferred", "multiple conflicting drivers", "logic loop")
+        if any(pattern in str(top_check["output"]) for pattern in prohibited):
+            top_check["status"] = "FAIL"
+            top_check["returncode"] = 1
+        checks.append(top_check)
     else:
         status = "FAIL" if arguments.require_rtl or arguments.bootstrap else "SKIP"
         missing = [
