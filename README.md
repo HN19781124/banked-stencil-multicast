@@ -2,18 +2,18 @@
 
 > 多バンクSRAMの静的データ配置と、重複窓を排除するマルチキャスト配線を直結した、局所ステンシル／複素数演算向けの公開構成案です。現行の実証結果と、将来の拡張候補を同じリポジトリ内で明確に分離します。
 
-[![DOI: v0.2.0](https://zenodo.org/badge/DOI/10.5281/zenodo.22155034.svg)](https://doi.org/10.5281/zenodo.22155034)
+[![DOI: all versions](https://zenodo.org/badge/DOI/10.5281/zenodo.22155033.svg)](https://doi.org/10.5281/zenodo.22155033)
 
-> v0.2.0の版DOIは[10.5281/zenodo.22155034](https://doi.org/10.5281/zenodo.22155034)です。全バージョンを指す概念DOIは[10.5281/zenodo.22155033](https://doi.org/10.5281/zenodo.22155033)です。
+> 全バージョンを指す概念DOIは[10.5281/zenodo.22155033](https://doi.org/10.5281/zenodo.22155033)です。版ごとのDOIは対応するZenodo recordと`CITATION.cff`に記録します。
 
 > [!NOTE]
-> `v0.1.0`は初期開示を固定したimmutable releaseです。`v0.2.0`は追試証跡と将来展望を固定したimmutable releaseで、上記のZenodo記録に保存されています。内容固定はチップsign-off、製造可能性、または性能保証を意味しません。
+> `v0.1.0`は初期開示、`v0.2.0`は追試証跡と将来展望、`v0.3.0`は本説明更新を固定したimmutable releaseです。内容固定はチップsign-off、製造可能性、または性能保証を意味しません。
 
 | 項目 | 内容 |
 |---|---|
 | 現行の事実 | `N=4` lanes／`M=12` single-port banksのreference、RTL、formal、および探索的physical evidence |
-| 文書版 | `v0.2.0` immutable release（Zenodo版DOI取得済み） |
-| 文書日 | 2026-08-29 |
+| 文書版 | `v0.3.0` immutable release（Zenodo Concept DOI） |
+| 文書日 | 2026-08-30 |
 | 公開目的 | Defensive Publication（第三者による排他的独占の防止） |
 | 作者の方針 | 特許取得・製造・収益化を目的としない |
 
@@ -47,7 +47,7 @@ flowchart LR
 
 ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）は、単なるBASICインタプリタではなく、`WINDOW`／`BROADCAST`／`MAC`／`STREAM`命令列を生成する制御層の**構想**です。これは規則区間の決定性レイテンシを目指す未実装拡張であり、現行の`N=4`実測値には含めません。
 
-窓の重複がなぜデータ移動・重複読出し・bank競合として現れるのかは、独立した[ステンシル窓の再定式化](docs/concepts/stencil-window-reframing.md)で図解しています。
+窓の重複がなぜデータ移動・重複読出し・bank競合として現れるのかは、独立した[ステンシル窓の再定式化（日本語）](docs/concepts/stencil-window-reframing.md)で図解しています。英語版は[English](docs/concepts/stencil-window-reframing.en.md)、簡体字版は[简体中文](docs/concepts/stencil-window-reframing.zh-Hans.md)です。
 
 ## 大規模な規則データで効く理由
 

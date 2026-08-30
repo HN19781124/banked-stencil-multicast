@@ -5,9 +5,9 @@ type: software
 authors:
   - family-names: Namiki
     given-names: Hiroshi
-version: "0.2.0"
-doi: "10.5281/zenodo.22155034"
-date-released: 2026-08-29
+version: "0.3.0"
+doi: "10.5281/zenodo.22155033"
+date-released: 2026-08-30
 repository-code: "https://github.com/HN19781124/banked-stencil-multicast"
 url: "https://github.com/HN19781124/banked-stencil-multicast"
 abstract: >-
