@@ -656,6 +656,71 @@ $B_{dram}=50$ GB/sは評価例であり、隠蔽の成立にはタイル寸法�
 - 未定義のフィードバック接続が最適解へ収束すること
 - ROMBASICマクロ命令展開層が実装済みであること
 
+### 8.1 特定宇宙用途：低軌道衛星のレーザー通信受信データ前処理（未評価）
+
+対象シナリオは、低軌道衛星のレーザー通信受信データ（複素I/Qまたは同等の複素サンプル）を、復調・復号の前段で規則的な局所フィルタ、相関、等化前処理へ通す用途に限定しています。光学系の捕捉・追尾、変復調方式、FEC／復号、飛行制御、推進、有人安全、宇宙機全般の認証は対象外です。本項は候補整理であり、現行の`N=4` baselineおよび18-bank 1R1W候補のいずれもflight qualification、放射線認証、熱真空認証を意味しません。特に2ポート化は帯域条件を緩和しますが、SRAM macroの放射線特性や発熱を自動的に解決しません。
+
+| 評価項目 | 当該用途での確認点 | 現在地 |
+|---|---|---|
+| 放射線 | TID、SEU／SET／SEL、SRAM bit upset、ECC／parity、scrub周期 | 未評価 |
+| 熱真空 | 無対流環境での接合温度、伝導経路、熱サイクル、休止bankの効果 | 温度・電力モデル未実施 |
+| 電力・帯域 | 18-bank 1R1Wの同時read／write、ピーク電力、idle／gating、W／sample | ポート一次モデルのみ |
+| 通信品質 | BER／FER、EVM、同期捕捉、link margin、packet loss、処理遅延 | 通信データ・リンクモデル未評価 |
+| 決定性 | 規則区間の固定latency、backpressure、DRAM待ち、fault／reset復帰 | 規則区間の論理条件のみ |
+| 信頼性 | watchdog、ECC／parity、冗長化、エラー封じ込め、fault injection | 未実装 |
+| 物理環境 | 振動、衝撃、package、EMI／EMC、配線・電源余裕 | 未評価 |
+| 障害耐性・縮退経路 | 2ポートmacro／bank／lane異常、熱・放射線アラームの検知・封じ込め、N=4縮退、直列化、再試行、safe halt、状態通知 | 経路・切替条件未定義 |
+| sign-off | PVT STA、IR／EM、gate-level、放射線試験、熱真空試験、当該用途のqualification | 本リポジトリの対象外 |
+
+```mermaid
+flowchart LR
+    C[18-bank 1R1W候補<br/>complex I/Q preprocessing] --> R[放射線評価]
+    C --> T[熱真空・電力評価]
+    C --> L[BER／EVM／同期／link margin]
+    C --> D[決定性・fault復帰]
+    C --> P[振動・EMI・物理sign-off]
+    C --> F{障害・制約条件}
+    F --> B[N=4／直列化へ縮退<br/>またはsafe halt]
+    R --> Q[当該用途のqualification<br/>未実施]
+    T --> Q
+    L --> Q
+    D --> Q
+    P --> Q
+    B --> Q
+```
+
+#### English — Specific space-use target: LEO laser-communication receive-data preprocessing (not evaluated)
+
+The target scenario is limited to preprocessing complex I/Q (or equivalent complex samples) received by a low-Earth-orbit satellite before demodulation and decoding, using regular local filtering, correlation, or equalization stages. Optical acquisition and tracking, modem selection, FEC/decoding, flight control, propulsion, crew safety, deep-space communications, and spacecraft-wide qualification are out of scope. This is a candidate evaluation frame: neither the measured `N=4` baseline nor the 18-bank 1R1W candidate is flight-, radiation-, or thermal-vacuum-qualified. Two-port memory relaxes the access-slot constraint but does not by itself solve SRAM radiation behavior or heat removal.
+
+| Evaluation item | Checks for this target | Current status |
+|---|---|---|
+| Radiation | TID, SEU/SET/SEL, SRAM bit upset, ECC/parity, scrub period | Not evaluated |
+| Thermal-vacuum | Junction temperature, conduction path, thermal cycling, idle-bank effect | No thermal/power model |
+| Power and bandwidth | Simultaneous read/write, peak power, idle/gating, W/sample | Port model only |
+| Communications quality | BER/FER, EVM, synchronization acquisition, link margin, packet loss, processing latency | Communication/link model not evaluated |
+| Determinism | Fixed latency in regular regions, backpressure, DRAM wait, fault/reset recovery | Logic conditions only |
+| Fault tolerance and degraded path | Dual-port macro/bank/lane faults, alarm detection/containment, N=4 fallback, serialization, retry, safe halt, status reporting | Path and switch criteria undefined |
+| Physical environment | Vibration, shock, package, EMI/EMC, wiring and power margin | Not evaluated |
+| Sign-off | PVT STA, IR/EM, gate-level, radiation and thermal-vacuum tests, target qualification | Out of scope for this repository |
+
+```mermaid
+flowchart LR
+    C[18-bank 1R1W candidate<br/>complex I/Q preprocessing] --> R[Radiation]
+    C --> T[Thermal-vacuum and power]
+    C --> L[BER / EVM / synchronization / link margin]
+    C --> D[Determinism and fault recovery]
+    C --> P[Vibration / EMI / physical sign-off]
+    C --> F{Fault or constraint}
+    F --> B[Degrade to N=4 / serialize<br/>or safe halt]
+    R --> Q[Target qualification<br/>not performed]
+    T --> Q
+    L --> Q
+    D --> Q
+    P --> Q
+    B --> Q
+```
+
 ## 9. Defensive Publicationについて
 
 本リポジトリは、作者による特許取得、製造、収益化ではなく、具体的かつ追試可能な技術開示によって第三者の後発的な独占を防ぐことを目的とします。内容を固定したGitHub Release、commit hash、公開日時、およびZenodo DOI付き外部archiveを保持します。
