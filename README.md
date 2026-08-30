@@ -455,7 +455,7 @@ ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）
 
 | 候補 | 構成上の可能性 | 現時点の境界 |
 |---|---|---|
-| レジスタ交換＋少数bank | 条件付きで可能。隣接laneの重複サンプルをoperand registerへ保持し、論理的なbank contextを二重化できる | 物理bank数、single-portの同時access枠、SRAM容量は増えない。N-way RTL／formal／physicalは未検証 |
+| レジスタ交換＋少数bank | 条件付きで可能。隣接laneの重複サンプルをoperand registerへ保持し、論理的なbank contextを二重化できる。18-bank 1R1Wで各bankのread／writeポート条件を満たす一次シミュレーションを[`reference/register_exchange.py`](reference/register_exchange.py)で確認済み | 物理bank数、single-portの同時access枠、SRAM容量は増えない。N-way RTL／formal／physicalは未検証 |
 | 時間空間ハイブリッドblocking | 可能な受け皿。spatial tile、temporal block、Halo、ping-pong、DMAを同じdescriptorで束ねられる | K深度、Halo面、追加buffer、backpressureを含む完全なスケジュールは未実装 |
 | 統一化IFによる異種演算・混在構成 | wrapper／adapterとして可能。既存stream契約の後段へ複素MAC、real／integer MAC、reduction等を選択接続できる | sideband、format、latency class、CDC、エラー規約の互換性は未検証 |
 
@@ -472,6 +472,12 @@ ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）
 同一cycleにregister交換後のread／writeを完了させる下限は、単純化したモデルで`M_{phys}\ge 2N`です。`N=16`なら少なくとも32個のsingle-port bank、または1 bankあたり2 access slotが必要で、18 bankはこの条件を満たしません。
 
 ただし、18個の物理bankを**各bank 1R1Wの真の2ポート**へ置き換える案なら、1 cycle当たり最大36 access slotを持てます。`N=16`、`T=3`では現行のread 18＋write 16＝34、register交換後でもread 16＋write 16＝32なので、各bankへのread／writeが最大2件に収まり、port arbitrationを含むscheduleを証明できれば同一cycleの帯域条件は満たせます。これは「18 bank×2 port＝36 access slot」という帯域相当であり、36個のsingle-port bankと同じ容量、配線長、面積、電力、固定latencyを意味しません。2ポートSRAM macroの1R1W仕様、同時同一address規則、bankごとの`access_count\le2`、タイミング、電力は未検証です。
+
+#### 18-bank 1R1Wポート条件の一次シミュレーション
+
+`reference/register_exchange.py` は、上記候補をチップ実装なしで確認する一次モデルです。`N=16`／`T=3`、初回read=18、定常read=16＋write=16、保持する重複サンプル=2を固定し、各bankのread／writeポート上限を検査します。実行例は `python reference/register_exchange.py --cycles 37 --rows 4` です。
+
+一次モデルでの判定は、定常32 access／cycleを36 port slot中88.9%で処理し、1R1Wポート条件はPASS、single-port条件は不成立（read／write同一bankが14〜16）です。phase差2または16では定常の平均休止bankが1になりますが、これはポート活動のproxyであり、温度・電力・タイミングの結果ではありません。対応する自動テストは[`tests/test_register_exchange.py`](tests/test_register_exchange.py)です。
 
 - read／writeを別cycleへ時間多重化し、register／FIFOでissue間隔を吸収する
 - SRAM macroをdouble-pumpまたはdual-edge相当で動かす（実効的にはaccess slotを増やす）
