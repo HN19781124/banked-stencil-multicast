@@ -1,10 +1,10 @@
 # 固定遅延型 1Dストリーミング複素数データフロー・コプロセッサ
 
-> 多バンクSRAMの静的データ配置と、重複窓を排除するマルチキャスト配線を直結した、局所ステンシル／複素数演算向けの公開構成案です。現行の実証結果と、将来の拡張候補を同じリポジトリ内で明確に分離します。
+> 多バンクSRAMの静的データ配置と、重複窓を排除するマルチキャスト配線を直結した、局所ステンシル／複素数演算向けの公開構成案です。現行の実証結果と、将来の拡張候補を同じリポジトリ内で明確に分離しています。
 
 [![DOI: all versions](https://zenodo.org/badge/DOI/10.5281/zenodo.22155033.svg)](https://doi.org/10.5281/zenodo.22155033)
 
-> 全バージョンを指す概念DOIは[10.5281/zenodo.22155033](https://doi.org/10.5281/zenodo.22155033)です。版ごとのDOIは対応するZenodo recordと`CITATION.cff`に記録します。
+> 全バージョンを指す概念DOIは[10.5281/zenodo.22155033](https://doi.org/10.5281/zenodo.22155033)です。版ごとのDOIは対応するZenodo recordと`CITATION.cff`に記録されます。
 
 > [!NOTE]
 > `v0.1.0`は初期開示、`v0.2.0`は追試証跡と将来展望、`v0.3.0`は本説明更新を固定したimmutable releaseです。内容固定はチップsign-off、製造可能性、または性能保証を意味しません。
@@ -79,7 +79,7 @@ ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）
 
 ### 3. N=16／M=36：数学的導出（未実装の展望）
 
-同じ`T=3`、single-port、連続窓、ping-pong、同一行の前提で、`U=18`、`M=36`、phase差=18です。読み出し集合を連続18 bank、書き込み集合をその半周後の連続16 bankとすれば、`R_t∩W_t=∅`であり、buffer役割を交換しても同じ半周差が保たれます。これは無衝突条件の数学的導出であって、16-lane RTL、formal、backpressure、配線、P&R、実測性能の証明ではありません。候補の数値と検証ゲートは[設計空間試算資料](docs/13-design-space-exploration.md)と[候補JSON](manufacturing/candidate-n16.json)に分離します。
+同じ`T=3`、single-port、連続窓、ping-pong、同一行の前提で、`U=18`、`M=36`、phase差=18です。読み出し集合を連続18 bank、書き込み集合をその半周後の連続16 bankとすれば、`R_t∩W_t=∅`であり、buffer役割を交換しても同じ半周差が保たれます。これは無衝突条件の数学的導出であって、16-lane RTL、formal、backpressure、配線、P&R、実測性能の証明ではありません。候補の数値と検証ゲートは[設計空間試算資料](docs/13-design-space-exploration.md)と[候補JSON](manufacturing/candidate-n16.json)に分離しています。
 
 ### 4. 検証境界
 
@@ -142,7 +142,7 @@ python tools/measure_performance.py --report physical/evidence/rtl-performance-r
 python tools/explore_design_space.py --json build/design-space-report.json --csv build/design-space-report.csv
 ```
 
-1行目はPython検証のみ、2行目は固定版の[YosysHQ OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build)（約0.5〜0.75 GB）をSHA-256照合後にuser cacheへ展開し、RTL simulation、形式検証、generic synthesisまで必須実行します。3行目は基準engineの無ストール／backpressure性能と段別サイクルを測定し、4行目はN-way候補の一次試算を行います。結果は `build/verification-report.json` または[RTL性能レポート](physical/evidence/RTL-PERFORMANCE-REPORT.md)に保存し、GPUの段別rooflineは[比較レポート](physical/evidence/GPU-COMPARISON-REPORT.md)に分離しています。
+1行目はPython検証のみ、2行目は固定版の[YosysHQ OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build)（約0.5〜0.75 GB）をSHA-256照合後にuser cacheへ展開し、RTL simulation、形式検証、generic synthesisまでを必須実行する手順です。3行目は基準engineの無ストール／backpressure性能と段別サイクルを測定する手順、4行目はN-way候補の一次試算を行う手順です。結果は `build/verification-report.json` または[RTL性能レポート](physical/evidence/RTL-PERFORMANCE-REPORT.md)に保存し、GPUの段別rooflineは[比較レポート](physical/evidence/GPU-COMPARISON-REPORT.md)に分離しています。
 
 固定遅延区間の配線契約を試す任意の補助層として、[Filament integration preparation](filament/README.md)を用意しています。`N=4`のmulticast境界だけを対象にし、必須CI／`tools/verify.py`／現行の検証済み範囲には追加しません。
 
@@ -157,7 +157,7 @@ python tools/explore_design_space.py --json build/design-space-report.json --csv
 | **N=16（数学的導出・次の検証候補）** | **18** | **36** | **144 KiB** | **7.2 / 13.6 GB/s** | **62.5%** | **12.8 / 38.4 GFLOP/s** |
 | N=24（一次試算・予算超過） | 26 | 52 | 208 KiB | 10.4 / 20.0 GB/s | 63.9% | 19.2 / 57.6 GFLOP/s |
 
-N=16は最終最適という意味ではなく、基準の3倍容量と48 endpointの境界に置く、尖った比較用ターゲットです。基準N=4のRTLレポート（read 2.4、write 1.6、合計4.0 GB/s／serialized 3.2 GFLOP/s）と一次モデルが一致することを校正に使います。N=16の性能値は未検証であり、**36-bankスケジュール、16-lane RTL、直接配線／buffered pyramidのmulticast等価性、formal、backpressure、同一制約のP&R比較**を順に実施します。前提とゲートは[設計空間試算資料](docs/13-design-space-exploration.md)、機械可読な候補定義は[候補JSON](manufacturing/candidate-n16.json)に固定しています。
+N=16は最終最適という意味ではなく、基準の3倍容量と48 endpointの境界に置く、尖った比較用ターゲットです。基準N=4のRTLレポート（read 2.4、write 1.6、合計4.0 GB/s／serialized 3.2 GFLOP/s）と一次モデルが一致することを校正に使います。N=16の性能値は未検証であり、**36-bankスケジュール、16-lane RTL、直接配線／buffered pyramidのmulticast等価性、formal、backpressure、同一制約のP&R比較**は必要な検証項目です。前提とゲートは[設計空間試算資料](docs/13-design-space-exploration.md)、機械可読な候補定義は[候補JSON](manufacturing/candidate-n16.json)に固定しています。
 
 3 tapの対称bank familyでは毎cycle 2 bankが休止します。この休止bankは均熱やclock／power gatingに割り当てられる余地がありますが、温度・電力への効果は未測定です。
 
@@ -200,7 +200,7 @@ flowchart LR
 - 虚部：FP16（2 byte）
 - 表現：`complex<FP16, FP16>`
 
-丸め、非正規化数、NaN、飽和、内部累積精度は実装時に別途定義します。
+丸め、非正規化数、NaN、飽和、内部累積精度は実装時に別途定義が必要です。
 
 ### 2.2 SRAMバンク構成
 
@@ -217,7 +217,7 @@ $$
 
 ### 2.3 重複窓の排除
 
-4レーンが隣接する出力点に対して3点ステンシルを同時処理する例を示します。
+4レーンが隣接する出力点に対して3点ステンシルを同時処理する例です。
 
 | レーン | 必要な入力窓 |
 |---|---|
@@ -350,11 +350,11 @@ $$
 W_p=16\left\lceil\frac{6\lceil W/6\rceil+2}{16}\right\rceil
 $$
 
-（4 byte/sampleなら行の格納量は $4W_p$ byte）です。このパディング、物理タイミング、配線、電力を含めて評価します。本案はREADME上の設計提案であり、基準RTL・formal・物理検証の結果には含めません。実装時は基準と独立した構成として全検証を再実行します。
+（4 byte/sampleなら行の格納量は $4W_p$ byte）です。このパディング、物理タイミング、配線、電力を含めた評価が必要です。本案はREADME上の設計提案であり、基準RTL・formal・物理検証の結果には含めません。実装時は基準と独立した構成として全検証の再実行が必要です。
 
 同じ前提で$N=16$は$U=18$、$M=36$、phase差$=18$となります。これは読み出し18 bankと書き込み16 bankの集合を半周ずらして無衝突にできるという数学的導出であり、16-lane RTL／physical実測ではありません。
 
-1-wayは重複共有を持たない最小実施形態、2-way以上は隣接窓の共有による読み出し圧縮を持つ実施形態です。`reference/bank_schedule.py` は $N=1,2,4,8,16,32$ の両ping-pong方向をreference levelで確認します。12-bank／4-way構成は、この一般式の $N=4,T=3$ に一致します。
+1-wayは重複共有を持たない最小実施形態、2-way以上は隣接窓の共有による読み出し圧縮を持つ実施形態です。`reference/bank_schedule.py` は $N=1,2,4,8,16,32$ の両ping-pong方向をreference levelで確認対象にします。12-bank／4-way構成は、この一般式の $N=4,T=3$ に一致します。
 
 ## 3. 演算レーン
 
@@ -414,12 +414,12 @@ flowchart TD
 
 ### A.1 横方向：分散メモリ型メニコア
 
-1Dユニットを横に並べ、タイルを分担します。
+1Dユニットを横に並べてタイルを分担する構成です。
 
 - 各ユニット／クラスタに専用DMAを配置
 - 外部DRAMのチャネルまたはアドレス領域を論理的に分割
 - 境界のHaloデータを隣接リンクで直接交換
-- 4 → 16 → 64ユニットの順で段階的にスケールを評価
+- 4 → 16 → 64ユニットの段階的スケール評価
 
 「各ユニットに局所DRAMを持つ」構成は、外付けDRAM、積層DRAM、eDRAM、共有DRAMの論理分割など複数の実装候補を含みます。DRAMを各ユニットと同一ダイ上に置けることを前提にはしません。
 
@@ -437,21 +437,21 @@ flowchart TD
 
 ### A.4 3Dステンシルへのロードマップ
 
-3D化は、まず奥行き方向のスライスを1Dユニットへ直列投入する実装を基準にします。既存のバンクスケジュール、Halo交換、MACを再利用できるため、機能検証と面積見積もりを小さく始められます。
+3D化は、まず奥行き方向のスライスを1Dユニットへ直列投入する実装を基準とする案です。既存のバンクスケジュール、Halo交換、MACを再利用できるため、機能検証と面積見積もりを小さく始められます。
 
-次段階では、隣接スライスのHalo面を直接配線またはピラミッド型マルチキャストツリーで共有します。ツリーの階層化は配線負荷を分割しますが、SRAM帯域、バッファ深さ、各段の遅延と電力は独立に検証する必要があります。
+次段階の候補は、隣接スライスのHalo面を直接配線またはピラミッド型マルチキャストツリーで共有する構成です。ツリーの階層化は配線負荷を分割しますが、SRAM帯域、バッファ深さ、各段の遅延と電力は独立に検証する必要があります。
 
-実装順序は、(1) 3D座標・HaloのPython参照モデル、(2) 直列3D RTLとformal、(3) スライス間ツリーRTL、(4) 16／32バンクへの物理配置・配線・電力評価、とします。各段階でバンク衝突、FIFOバックプレッシャ、fan-out、タイミングを再検証します。
+実装順序の候補は、(1) 3D座標・HaloのPython参照モデル、(2) 直列3D RTLとformal、(3) スライス間ツリーRTL、(4) 16／32バンクへの物理配置・配線・電力評価、です。各段階でバンク衝突、FIFOバックプレッシャ、fan-out、タイミングの再検証が必要です。
 
 ## 付録B. ROMBASICマクロ命令展開層（未実装拡張）
 
-ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）は、CPU／hostから受けた記述を`WINDOW`／`BROADCAST`／`MAC`／`STREAM`命令列へ展開する制御面の将来候補です。規則区間の決定性レイテンシを目指しますが、現行の`N=4`データ面、reference、RTL、formal、physical evidenceには含まれません。
+ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）は、CPU／hostから受けた記述を`WINDOW`／`BROADCAST`／`MAC`／`STREAM`命令列へ展開する制御面の将来候補です。規則区間の決定性レイテンシを目指す案ですが、現行の`N=4`データ面、reference、RTL、formal、physical evidenceには含まれません。
 
 命令形式、GPU連携、自己注意やフィードバックを含む探索的な接続案は、[ROMBASIC／GPU統合の参考案](docs/concepts/rombasic-gpu-integration.md)に置きます。これらは実装済み機能、性能値、またはチップ sign-offを意味しません。
 
 ## 付録C. レジスタ交換・時間空間ブロッキング・統一IF（未実装拡張）
 
-ここでは、現行の`N=4`／`M=12`実測baselineを変更せずに追加できる将来の受け皿を、成立条件と未検証範囲に分けて記載します。
+ここでは、現行の`N=4`／`M=12`実測baselineを変更せずに追加できる将来の受け皿を、成立条件と未検証範囲に分けて記載しています。
 
 | 候補 | 構成上の可能性 | 現時点の境界 |
 |---|---|---|
@@ -509,7 +509,7 @@ $$
 
 この式は容量見積もりの入口であり、実装が自動的に成立することを意味しません。tile間Halo、temporal version数、register／FIFO深さ、bank padding、fan-outを同時に収める必要があります。現行のping-pongは隣接producer／consumerを重ねる基礎であり、`K>1`の完全なtime-space schedule、依存関係、境界、backpressureは未実装です。
 
-DRAM隠蔽の条件も、単純な`T_compute\ge T_prefetch`から、Halo転送と起動を含めて評価します。同一DMA／リンクでこれらを直列化する保守的な条件は次式です。並列化できる場合は、`T_prefetch`と`T_halo`の最大値を使って再評価します。
+DRAM隠蔽の条件も、単純な`T_compute\ge T_prefetch`から、Halo転送と起動を含めた評価が必要です。同一DMA／リンクでこれらを直列化する保守的な条件は次式です。並列化できる場合は、`T_prefetch`と`T_halo`の最大値を使った再評価が必要です。
 
 $$
 T_{compute}(K)\ge T_{prefetch}+T_{halo}+T_{setup}
@@ -538,7 +538,7 @@ flowchart TD
 
 現行のcore境界は、128-bit AXI4-Streamの`ready/valid`、`TKEEP`、`TLAST`、lane-valid metadata、およびAXI4-Lite CSRです（[architecture and interfaces](docs/03-architecture-and-interfaces.md)、[SRAM／DMA contract](docs/04-memory-streaming-and-dma.md)）。この境界を壊さず、wrapper側にversioned descriptorとoperator adapterを置くことで、同じデータ面へ異種演算を選択的に接続できます。
 
-候補のsidebandは、`op_id`、`format_id`、`lane_mask`、tile／phase、`latency_class`、`error/status`です。複素FP16 MACは現行の実装対象、real／integer MAC、reduction、activation、世代の異なる演算coreは将来adapterの対象とします。異種演算を混在させても固定遅延を自動的に保つわけではなく、各`latency_class`の規則区間を定義するか、ready／validのelastic modeとして扱う必要があります。
+候補のsidebandは、`op_id`、`format_id`、`lane_mask`、tile／phase、`latency_class`、`error/status`です。複素FP16 MACは現行の実装対象、real／integer MAC、reduction、activation、世代の異なる演算coreは将来adapterの対象候補です。異種演算を混在させても固定遅延を自動的に保つわけではなく、各`latency_class`の規則区間を定義するか、ready／validのelastic modeとして扱う必要があります。
 
 ```mermaid
 flowchart LR
@@ -564,15 +564,15 @@ flowchart LR
     class OUT out;
 ```
 
-この統一IFは、異種演算を同じstreamへ接続するための設計境界を示すもので、現行RTLが任意の`op_id`、precision、latencyを受理するという意味ではありません。sideband packing、旧世代coreとのversion negotiation、clock／reset／CDC、エラー伝搬、異なる処理量のmergeを、operatorごとに独立して検証します。
+この統一IFは、異種演算を同じstreamへ接続するための設計境界を示すもので、現行RTLが任意の`op_id`、precision、latencyを受理するという意味ではありません。sideband packing、旧世代coreとのversion negotiation、clock／reset／CDC、エラー伝搬、異なる処理量のmergeは、operatorごとに独立した検証が必要です。
 
 ### C.4 FFT・領域抽出・差分計算の責務分離
 
-本coreの責務は、規則的な局所windowを`unique-sample → multicast → MAC`で処理することです。FFT、global reduction、histogram、複雑な領域抽出、可変strideの差分計算のような非局所／不規則処理は、前段または後段の専用operator、ソフトウェア、または別アクセラレータへ分離します。「FFTは知らないので後で計算する」という意味ではなく、**異なるアクセス規則を持つ処理を同じbank証明と固定latency主張へ混ぜない**という責務境界です。
+本coreの責務は、規則的な局所windowを`unique-sample → multicast → MAC`で処理することです。FFT、global reduction、histogram、複雑な領域抽出、可変strideの差分計算のような非局所／不規則処理は、前段または後段の専用operator、ソフトウェア、または別アクセラレータへ分離する構成です。「FFTは知らないので後で計算する」という意味ではなく、**異なるアクセス規則を持つ処理を同じbank証明と固定latency主張へ混ぜない**という責務境界です。
 
 サンプリング／間引き、ROI選択、mask適用、stride変換、padding／Halo生成、形式変換は、現行baselineでは**SW／hostまたはDMA前処理で正規化することが必須の入力契約**です。SW側で選択結果を連続したphysical tileへ詰め直してからcoreへ渡せば、coreは既存の`B(x,y)`、unique-window、bank conflict条件を再利用できます。現行coreはrawな不規則サンプル列をそのまま受け付ける設計ではありません。間引き後の座標をcore内で直接扱う場合は、window幅、bank mapping、Halo、lane maskを別スケジュールとして再検証する必要があり、現行baselineには含めません。
 
-領域抽出、差分、閾値、正規化などが局所かつ固定形状であれば、前処理adapterとして入力側へ置くか、後処理adapterとして出力側へ置けます。FFTを接続する場合も、専用FFT blockまたはソフトウェア実装をunified stream IFへ接続し、FFT固有のstride、twiddle、stage latency、buffer容量、backpressureを別の`latency_class`として検証します。これらは現行`N=4` baselineの実装・性能・固定遅延には含めません。
+領域抽出、差分、閾値、正規化などが局所かつ固定形状であれば、前処理adapterとして入力側へ置くか、後処理adapterとして出力側へ置けます。FFTを接続する場合も、専用FFT blockまたはソフトウェア実装をunified stream IFへ接続し、FFT固有のstride、twiddle、stage latency、buffer容量、backpressureは別の`latency_class`として検証が必要です。これらは現行`N=4` baselineの実装・性能・固定遅延には含めません。
 
 ```mermaid
 flowchart LR
