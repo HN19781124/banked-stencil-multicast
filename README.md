@@ -449,6 +449,154 @@ ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）
 
 命令形式、GPU連携、自己注意やフィードバックを含む探索的な接続案は、[ROMBASIC／GPU統合の参考案](docs/concepts/rombasic-gpu-integration.md)に置きます。これらは実装済み機能、性能値、またはチップ sign-offを意味しません。
 
+## 付録C. レジスタ交換・時間空間ブロッキング・統一IF（未実装拡張）
+
+ここでは、現行の`N=4`／`M=12`実測baselineを変更せずに追加できる将来の受け皿を、成立条件と未検証範囲に分けて記載します。
+
+| 候補 | 構成上の可能性 | 現時点の境界 |
+|---|---|---|
+| レジスタ交換＋少数bank | 条件付きで可能。隣接laneの重複サンプルをoperand registerへ保持し、論理的なbank contextを二重化できる | 物理bank数、single-portの同時access枠、SRAM容量は増えない。N-way RTL／formal／physicalは未検証 |
+| 時間空間ハイブリッドblocking | 可能な受け皿。spatial tile、temporal block、Halo、ping-pong、DMAを同じdescriptorで束ねられる | K深度、Halo面、追加buffer、backpressureを含む完全なスケジュールは未実装 |
+| 統一化IFによる異種演算・混在構成 | wrapper／adapterとして可能。既存stream契約の後段へ複素MAC、real／integer MAC、reduction等を選択接続できる | sideband、format、latency class、CDC、エラー規約の互換性は未検証 |
+
+### C.1 レジスタ交換による論理bank contextの拡張
+
+「12バンクで24バンク相当」「18バンクで36バンク相当」という表現は、**論理的なoperand供給状態またはbuffer contextの相当**という意味に限定します。物理的なbank容量、single-portのaccess slot、配線本数が24／36バンクになることは意味しません。
+
+隣接windowで次のissueにも残る`T-1`個のサンプルをlane間のoperand registerへ保持し、register exchange／forwardingで再利用すれば、定常部のSRAM readを`U=N+T-1`から新規サンプル数`N`へ近づけられる可能性があります。`N=4`、`T=3`なら、warm-up後のモデルはread 4＋write 4＝8 access／cycleであり、12物理bank内に収まります。ただし、これは6 read＋4 writeの現行baselineとは別スケジュールで、境界、stall、row切替を含むRTL／formal／physical evidenceはありません。
+
+このread 4／write 4が成立するには、選んだphaseとbank mappingでなお`R_t\cap W_t=\varnothing`を満たす必要があります。register exchangeのforwarding段数は規則区間の固定latencyへ加算されるため、現行の測定値をそのまま継承するものでもありません。
+
+`N=16`、`T=3`では、重複2サンプルをregisterへ残してもread 18→16、write 16で、同一cycleに32 access枠が必要です。したがって18個のsingle-port bankだけで36-bank scheduleと同じ同時read／write帯域を得ることはできません。成立させるには、少なくとも次のいずれかが必要です。
+
+同一cycleにregister交換後のread／writeを完了させる下限は、単純化したモデルで`M_{phys}\ge 2N`です。`N=16`なら少なくとも32個のsingle-port bank、または1 bankあたり2 access slotが必要で、18 bankはこの条件を満たしません。
+
+ただし、18個の物理bankを**各bank 1R1Wの真の2ポート**へ置き換える案なら、1 cycle当たり最大36 access slotを持てます。`N=16`、`T=3`では現行のread 18＋write 16＝34、register交換後でもread 16＋write 16＝32なので、各bankへのread／writeが最大2件に収まり、port arbitrationを含むscheduleを証明できれば同一cycleの帯域条件は満たせます。これは「18 bank×2 port＝36 access slot」という帯域相当であり、36個のsingle-port bankと同じ容量、配線長、面積、電力、固定latencyを意味しません。2ポートSRAM macroの1R1W仕様、同時同一address規則、bankごとの`access_count\le2`、タイミング、電力は未検証です。
+
+- read／writeを別cycleへ時間多重化し、register／FIFOでissue間隔を吸収する
+- SRAM macroをdouble-pumpまたはdual-edge相当で動かす（実効的にはaccess slotを増やす）
+- write stagingを別の物理メモリまたは独立portへ分離する
+
+したがって、18→36（または12→24）は**論理供給の再利用・context数の表現**としては記載可能ですが、36-bankと同じ物理帯域・容量・固定遅延を保証する主張にはしません。
+
+```mermaid
+flowchart LR
+    S12["12-bank physical SRAM<br/>A/B phase domains"] --> R12["register exchange<br/>overlap samples retained"]
+    R12 --> C12["24-bank-style logical operand context<br/>not 24 physical banks"]
+    C12 --> M4["N=4 MAC"]
+
+    S18["18-bank physical SRAM"] --> R18["register exchange<br/>conditional time-multiplex"]
+    R18 --> C18["36-bank-style logical context<br/>not 36-bank same-cycle bandwidth"]
+    C18 --> M16["N=16 MAC"]
+
+    classDef mem fill:#eff6ff,stroke:#2563eb,stroke-width:1px;
+    classDef reg fill:#fef3c7,stroke:#d97706,stroke-width:1px;
+    classDef context fill:#f3e8ff,stroke:#9333ea,stroke-width:1px;
+    classDef mac fill:#ecfdf5,stroke:#059669,stroke-width:1px;
+    class S12,S18 mem;
+    class R12,R18 reg;
+    class C12,C18 context;
+    class M4,M16 mac;
+```
+
+### C.2 時間空間ハイブリッドblockingの受け皿
+
+spatial方向のtile分割とtemporal方向の`K`段blockingを、同じdescriptor、local SRAM、ping-pong buffer、Halo交換、DMA境界へ束ねる構成は可能です。対称radiusを`r`、spatial tile幅を`W_d`とすると、`d`次元で`K`段を保持する入力footprintの一次式は次のように書けます。
+
+$$
+F_K=\prod_{d}(W_d+2Kr)
+$$
+
+この式は容量見積もりの入口であり、実装が自動的に成立することを意味しません。tile間Halo、temporal version数、register／FIFO深さ、bank padding、fan-outを同時に収める必要があります。現行のping-pongは隣接producer／consumerを重ねる基礎であり、`K>1`の完全なtime-space schedule、依存関係、境界、backpressureは未実装です。
+
+DRAM隠蔽の条件も、単純な`T_compute\ge T_prefetch`から、Halo転送と起動を含めて評価します。同一DMA／リンクでこれらを直列化する保守的な条件は次式です。並列化できる場合は、`T_prefetch`と`T_halo`の最大値を使って再評価します。
+
+$$
+T_{compute}(K)\ge T_{prefetch}+T_{halo}+T_{setup}
+$$
+
+```mermaid
+flowchart TD
+    BULK["bulk stream"] --> SPAT["spatial tile partition<br/>bank／fan-out budget"]
+    SPAT --> TEMP["temporal block K<br/>local SRAM A/B + register exchange"]
+    DMA["DMA prefetch"] --> TEMP
+    TEMP --> HALO["Halo exchange<br/>neighbor tile／slice"]
+    TEMP --> OP["multicast → heterogeneous operator"]
+    OP --> NEXT["next temporal step or output stream"]
+    HALO --> NEXT
+
+    classDef io fill:#f8fafc,stroke:#64748b,stroke-width:1px;
+    classDef block fill:#eff6ff,stroke:#2563eb,stroke-width:1px;
+    classDef side fill:#fef3c7,stroke:#d97706,stroke-width:1px;
+    classDef out fill:#ecfdf5,stroke:#059669,stroke-width:1px;
+    class BULK,NEXT io;
+    class SPAT,TEMP,OP block;
+    class DMA,HALO side;
+```
+
+### C.3 統一化IFによる異種演算・混在構成への選択的組み込み
+
+現行のcore境界は、128-bit AXI4-Streamの`ready/valid`、`TKEEP`、`TLAST`、lane-valid metadata、およびAXI4-Lite CSRです（[architecture and interfaces](docs/03-architecture-and-interfaces.md)、[SRAM／DMA contract](docs/04-memory-streaming-and-dma.md)）。この境界を壊さず、wrapper側にversioned descriptorとoperator adapterを置くことで、同じデータ面へ異種演算を選択的に接続できます。
+
+候補のsidebandは、`op_id`、`format_id`、`lane_mask`、tile／phase、`latency_class`、`error/status`です。複素FP16 MACは現行の実装対象、real／integer MAC、reduction、activation、世代の異なる演算coreは将来adapterの対象とします。異種演算を混在させても固定遅延を自動的に保つわけではなく、各`latency_class`の規則区間を定義するか、ready／validのelastic modeとして扱う必要があります。
+
+```mermaid
+flowchart LR
+    HOST["CPU／DMA"] --> IF["versioned unified stream IF<br/>ready/valid · TKEEP · TLAST · lane mask · op/format"]
+    CTRL["AXI-Lite CSR<br/>descriptor／phase"] --> ADAPT
+    IF --> ADAPT["operator／format adapter"]
+    ADAPT --> C["complex FP16 MAC<br/>measured N=4"]
+    ADAPT --> RI["real／integer MAC<br/>future"]
+    ADAPT --> RED["reduction／activation<br/>future"]
+    C --> OUT["unified output IF<br/>status + latency class"]
+    RI --> OUT
+    RED --> OUT
+
+    classDef io fill:#f8fafc,stroke:#64748b,stroke-width:1px;
+    classDef ctrl fill:#fef3c7,stroke:#d97706,stroke-width:1px;
+    classDef adapt fill:#f3e8ff,stroke:#9333ea,stroke-width:1px;
+    classDef op fill:#eff6ff,stroke:#2563eb,stroke-width:1px;
+    classDef out fill:#ecfdf5,stroke:#059669,stroke-width:1px;
+    class HOST,IF io;
+    class CTRL ctrl;
+    class ADAPT adapt;
+    class C,RI,RED op;
+    class OUT out;
+```
+
+この統一IFは、異種演算を同じstreamへ接続するための設計境界を示すもので、現行RTLが任意の`op_id`、precision、latencyを受理するという意味ではありません。sideband packing、旧世代coreとのversion negotiation、clock／reset／CDC、エラー伝搬、異なる処理量のmergeを、operatorごとに独立して検証します。
+
+### C.4 FFT・領域抽出・差分計算の責務分離
+
+本coreの責務は、規則的な局所windowを`unique-sample → multicast → MAC`で処理することです。FFT、global reduction、histogram、複雑な領域抽出、可変strideの差分計算のような非局所／不規則処理は、前段または後段の専用operator、ソフトウェア、または別アクセラレータへ分離します。「FFTは知らないので後で計算する」という意味ではなく、**異なるアクセス規則を持つ処理を同じbank証明と固定latency主張へ混ぜない**という責務境界です。
+
+サンプリング／間引き、ROI選択、mask適用、stride変換、padding／Halo生成、形式変換は、現行baselineでは**SW／hostまたはDMA前処理で正規化することが必須の入力契約**です。SW側で選択結果を連続したphysical tileへ詰め直してからcoreへ渡せば、coreは既存の`B(x,y)`、unique-window、bank conflict条件を再利用できます。現行coreはrawな不規則サンプル列をそのまま受け付ける設計ではありません。間引き後の座標をcore内で直接扱う場合は、window幅、bank mapping、Halo、lane maskを別スケジュールとして再検証する必要があり、現行baselineには含めません。
+
+領域抽出、差分、閾値、正規化などが局所かつ固定形状であれば、前処理adapterとして入力側へ置くか、後処理adapterとして出力側へ置けます。FFTを接続する場合も、専用FFT blockまたはソフトウェア実装をunified stream IFへ接続し、FFT固有のstride、twiddle、stage latency、buffer容量、backpressureを別の`latency_class`として検証します。これらは現行`N=4` baselineの実装・性能・固定遅延には含めません。
+
+```mermaid
+flowchart LR
+    SRC["入力／DMA"] --> PRE["SW／前段adapter<br/>ROI・サンプリング／間引き・差分・形式変換"]
+    PRE --> IF1["unified stream IF<br/>shape／format／lane mask"]
+    IF1 --> CORE["本core<br/>local stencil<br/>unique read → multicast → MAC"]
+    CORE --> IF2["unified stream IF<br/>status／latency class"]
+    IF2 --> POST["後段adapter<br/>集約・変換・scatter"]
+    IF2 -.-> FFT["専用FFT block／software<br/>non-local access"]
+    POST --> DST["出力／次段"]
+    FFT --> DST
+
+    classDef io fill:#f8fafc,stroke:#64748b,stroke-width:1px;
+    classDef adapter fill:#fef3c7,stroke:#d97706,stroke-width:1px;
+    classDef core fill:#eff6ff,stroke:#2563eb,stroke-width:1px;
+    classDef ifc fill:#f3e8ff,stroke:#9333ea,stroke-width:1px;
+    classDef other fill:#fff1f2,stroke:#e11d48,stroke-width:1px;
+    class SRC,DST io;
+    class PRE,POST adapter;
+    class CORE core;
+    class IF1,IF2 ifc;
+    class FFT other;
+```
+
 ## 6. DRAM待ち時間の隠蔽
 
 時間ブロッキング深さ $K=4$ を初期候補とし、演算と次タイルの先読みをping-pongバッファで重ねます。完全に隠蔽できる条件は次のとおりです。
