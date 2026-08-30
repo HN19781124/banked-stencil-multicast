@@ -2,13 +2,17 @@
 
 > 多バンクSRAMの静的データ配置と、重複窓を排除するマルチキャスト配線を直結した、局所ステンシル／複素数演算向けの公開構成案です。現行の実証結果と、将来の拡張候補を同じリポジトリ内で明確に分離します。
 
+[![DOI: v0.2.0](https://zenodo.org/badge/DOI/10.5281/zenodo.22155034.svg)](https://doi.org/10.5281/zenodo.22155034)
+
+> v0.2.0の版DOIは[10.5281/zenodo.22155034](https://doi.org/10.5281/zenodo.22155034)です。全バージョンを指す概念DOIは[10.5281/zenodo.22155033](https://doi.org/10.5281/zenodo.22155033)です。
+
 > [!NOTE]
-> `v0.1.0`は初期開示を固定したimmutable releaseです。次回の`v0.2.0`はREADMEと追試証跡を固定するためのタグ／Release名であり、実際のタグ／Releaseを作成して固定した後にこの表記を確定します。内容固定はチップsign-off、製造可能性、または性能保証を意味しません。
+> `v0.1.0`は初期開示を固定したimmutable releaseです。`v0.2.0`は追試証跡と将来展望を固定したimmutable releaseで、上記のZenodo記録に保存されています。内容固定はチップsign-off、製造可能性、または性能保証を意味しません。
 
 | 項目 | 内容 |
 |---|---|
 | 現行の事実 | `N=4` lanes／`M=12` single-port banksのreference、RTL、formal、および探索的physical evidence |
-| 文書版 | `v0.2.0`候補（タグ／Release固定後に確定） |
+| 文書版 | `v0.2.0` immutable release（Zenodo版DOI取得済み） |
 | 文書日 | 2026-08-29 |
 | 公開目的 | Defensive Publication（第三者による排他的独占の防止） |
 | 作者の方針 | 特許取得・製造・収益化を目的としない |
@@ -137,6 +141,8 @@ python tools/explore_design_space.py --json build/design-space-report.json --csv
 ```
 
 1行目はPython検証のみ、2行目は固定版の[YosysHQ OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build)（約0.5〜0.75 GB）をSHA-256照合後にuser cacheへ展開し、RTL simulation、形式検証、generic synthesisまで必須実行します。3行目は基準engineの無ストール／backpressure性能と段別サイクルを測定し、4行目はN-way候補の一次試算を行います。結果は `build/verification-report.json` または[RTL性能レポート](physical/evidence/RTL-PERFORMANCE-REPORT.md)に保存し、GPUの段別rooflineは[比較レポート](physical/evidence/GPU-COMPARISON-REPORT.md)に分離しています。
+
+固定遅延区間の配線契約を試す任意の補助層として、[Filament integration preparation](filament/README.md)を用意しています。`N=4`のmulticast境界だけを対象にし、必須CI／`tools/verify.py`／現行の検証済み範囲には追加しません。
 
 ## 詳細：試算と次の検証候補
 
@@ -496,7 +502,7 @@ $B_{dram}=50$ GB/sは評価例であり、隠蔽の成立にはタイル寸法�
 
 ## 9. Defensive Publicationについて
 
-本リポジトリは、作者による特許取得、製造、収益化ではなく、具体的かつ追試可能な技術開示によって第三者の後発的な独占を防ぐことを目的とします。公開時は内容を固定したGitHub Releaseを作成し、commit hashと公開日時を保持し、可能ならDOI付き外部archiveにも保存します。
+本リポジトリは、作者による特許取得、製造、収益化ではなく、具体的かつ追試可能な技術開示によって第三者の後発的な独占を防ぐことを目的とします。内容を固定したGitHub Release、commit hash、公開日時、およびZenodo DOI付き外部archiveを保持します。
 
 > [!NOTE]
 > 公開は特許権や一律の無効効果を発生させるものではなく、先行技術としての効果は公開時期、開示内容、到達可能性、法域および対象クレームごとに判断されます（[JPO](https://www.jpo.go.jp/system/laws/rule/guideline/patent/tukujitu_kijun/ht/03_0200.html)、[WIPO](https://www.wipo.int/en/web/patents/faq_patents)）。本節は法的助言ではありません。

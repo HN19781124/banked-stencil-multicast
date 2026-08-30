@@ -1,0 +1,29 @@
+// Optional timing contract for the measured N=4/M=12 multicast boundary.
+// This file does not model AXI/FIFO backpressure, SRAM macros, or DRAM waits.
+
+extern "../rtl/stencil_multicast.sv" {
+  comp stencil_multicast<'G: 1>(
+    unique_samples_i: ['G, 'G+1] 192
+  ) -> (
+    lane_samples_o: ['G, 'G+1] 384
+  );
+}
+
+comp N4Multicast<'G: 1>(
+  unique_samples: ['G, 'G+1] 192
+) -> (
+  lane_samples: ['G, 'G+1] 384
+) {
+  multicast := new stencil_multicast<'G>(unique_samples);
+  lane_samples = multicast.lane_samples_o;
+}
+
+comp main<'G: 1>(
+  go: interface['G],
+  unique_samples: ['G, 'G+1] 192
+) -> (
+  lane_samples: ['G, 'G+1] 384
+) {
+  n4 := new N4Multicast<'G>(unique_samples);
+  lane_samples = n4.lane_samples;
+}

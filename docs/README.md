@@ -34,6 +34,7 @@
 
 - [ROMBASIC／GPU統合案](concepts/rombasic-gpu-integration.md) — baseline外の将来候補
 - [設計空間試算](13-design-space-exploration.md) — 制約付きN-way候補選定とN=16検証ゲート
+- [Filament integration preparation](../filament/README.md) — N=4規則区間の任意タイミング契約PoC
 - [物理実装の再現入口](../physical/README.md)
 
 ## 完了の定義
