@@ -47,6 +47,8 @@ flowchart LR
 
 ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）は、単なるBASICインタプリタではなく、`WINDOW`／`BROADCAST`／`MAC`／`STREAM`命令列を生成する制御層の**構想**です。これは規則区間の決定性レイテンシを目指す未実装拡張であり、現行の`N=4`実測値には含めません。
 
+窓の重複がなぜデータ移動・重複読出し・bank競合として現れるのかは、独立した[ステンシル窓の再定式化](docs/concepts/stencil-window-reframing.md)で図解しています。
+
 ## 大規模な規則データで効く理由
 
 - 隣接する`N`レーンと`T` tapの窓は、論理要求`N*T`個に対して`U=N+T-1`個のunique sampleだけを必要とします。
