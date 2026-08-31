@@ -61,7 +61,7 @@ ATPG target:
 
 ### SRAM MBIST
 
-12 bankを独立に選択し、March C-相当またはmacro supplier承認algorithmで次を検出する。
+`M=12` bankを独立に選択し、March C-相当またはmacro supplier承認algorithmで次を検出する。
 
 - stuck-at
 - address decoder

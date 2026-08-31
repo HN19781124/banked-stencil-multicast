@@ -2,7 +2,7 @@
 
 [日本語（正本）](rombasic-gpu-integration.md) ／ [English](rombasic-gpu-integration.en.md) ／ 简体中文
 
-> 本文是未来集成参考，不属于已测量的 12-bank/4-lane 基线、v0.3.0
+> 本文是未来集成参考，不属于已测量的 `N=4`／`M=12` 基线、v0.3.0
 > sign-off，也不是性能保证。
 
 ## 为什么采用 BASIC 风格的控制描述

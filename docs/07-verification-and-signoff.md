@@ -8,11 +8,11 @@
 
 | 対象 | 方法 | 状態 |
 |---|---|---|
-| 12-bank scheduler | Python reference、36-state RTL simulation、Yosys SAT | PASS |
+| `M=12` bank scheduler | Python reference、36-state RTL simulation、Yosys SAT | PASS |
 | scalable schedule | N=1/2/4/8/16/32、両buffer方向 | PASS |
 | row edge / Halo | width 1–257、両phase、部分lane | PASS |
 | cross-row reference phase | 全row pair reference model | PASS（製品はbubble policy） |
-| synchronous SRAM + multicast | behavioral 12-bank model、両方向 | PASS |
+| synchronous SRAM + multicast | behavioral `M=12` bank model、両方向 | PASS |
 | complex FP MAC | bit-exact reference / 256-vector RTL / product RTL | PASS（RTL；gate/physical pending） |
 | AXI stream / CSR | randomized FIFO / AXI-Lite CSR / product RTL | PARTIAL（VIP/coverage pending） |
 | DMA wrapper / backpressure | FIFO/engine/product randomized path | PARTIAL（external DMA wrapper pending） |

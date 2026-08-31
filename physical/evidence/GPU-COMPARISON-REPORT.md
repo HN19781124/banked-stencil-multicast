@@ -1,6 +1,6 @@
 # GPU同条件比較レポート
 
-本書は、基準12-bank／4-lane／3-tap RTL性能と、公開GPU仕様から計算した帯域rooflineを同一カーネル条件で比較する補助資料である。GPU実機は本環境に存在しないため、ここでのGPU値はベンチマーク結果ではなく理論上限である。
+本書は、基準`N=4`／`M=12`／`T=3` RTL性能と、公開GPU仕様から計算した帯域rooflineを同一カーネル条件で比較する補助資料である。GPU実機は本環境に存在しないため、ここでのGPU値はベンチマーク結果ではなく理論上限である。
 
 ## 比較条件
 
@@ -48,7 +48,7 @@ result_bw = P_bw / 24 FLOP/output
 
 GPU全体の一つの数字に潰さず、同じ4-output issueを次の段へ分解して比較する。RTLの`control`〜`output wait`はtransactionの実測cycle、`mac_busy`は読出しと重なる演算時間である。GPUにはASICのような固定prefetch SRAM段がないため、対応するglobal load、warp内window形成、MAC、global storeを測定する。
 
-| 段 | 12-bank RTL（nostall / stress） | GPU側の対応 | 比較する値 |
+| 段 | `N=4`／`M=12` RTL（nostall / stress） | GPU側の対応 | 比較する値 |
 |---|---|---|---|
 | load/prefetch | 20 / 30 cycle、18 beat受理、72 word (288 B) 書込み | coalesced global load（unique sample 6個／issue） | byte/output、load latency、cache hit率 |
 | window read | 15 / 15 cycle、90 word (360 B) | global/shared-memory read | 実効read GB/s、warp stall |
@@ -93,4 +93,3 @@ GPUの「1コア」は本提案の1Dユニットと直接対応しない。RTX B
 - 計算条件: 本書「比較条件」
 - GPU仕様取得日: 2026-08-29
 - GPU実測環境: 未導入
-

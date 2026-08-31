@@ -2,8 +2,9 @@
 
 [日本語（正本）](asic-linebuffer-comparison.md) · English · [简体中文](asic-linebuffer-comparison.zh-Hans.md)
 
-This is a reference-only model for placing the same 3x3 stencil, four lanes,
-and 4-byte complex samples in an ASIC. It fixes a common input, compute, and
+This is a reference-only model for placing the same `N=4`-lane, `M=36`-bank
+candidate, 3x3 stencil, and 4-byte complex samples in an ASIC. Here `N` always
+denotes lane count and `M` physical SRAM-bank count. It fixes a common input, compute, and
 output contract, but does not provide line-buffer RTL, common-PDK place and
 route, or technology-calibrated power. The activity counters are not absolute
 power measurements.
@@ -13,7 +14,7 @@ power measurements.
 ~~~mermaid
 flowchart LR
     IN[Common input tile<br/>complex sample] --> LB[Line buffer<br/>3-row SRAM + window registers]
-    IN --> BM[Banked multicast<br/>36-bank candidate]
+    IN --> BM[Banked multicast<br/>N=4 / M=36-bank candidate]
     LB --> LMAC[Common four-lane complex MAC]
     BM --> BMAC[Common four-lane complex MAC]
     LMAC --> OUT[Common output FIFO / stream]
@@ -69,7 +70,7 @@ technology-independent symbolic terms are:
           + F_BM*e_multicast_fanout + C*e_common
 
 S_LB represents window-register movement and F_BM represents multicast
-fan-out. The existing 11.434 mW N=4 SKY130 exploration is a separate banked
+fan-out. The existing 11.434 mW `N=4`/`M=12` SKY130 exploration is a separate banked
 ASIC anchor, not a value for this 2D comparison.
 
 This document is an English companion summary; the Japanese file remains the

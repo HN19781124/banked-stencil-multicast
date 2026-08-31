@@ -2,8 +2,9 @@
 
 [日本語（正本）](VALIDATION.md) · [English](VALIDATION.en.md) · 简体中文
 
-本摘要按照初始 bank-scheduler 公开内容复现外围功能和物理流程检查。每个
-PASS 只适用于表中注明的边界；制造 sign-off 以
+本摘要按照初始 bank-scheduler 公开内容复现外围功能和物理流程检查。本文
+统一使用 `N` 表示 lane 数、`M` 表示物理 SRAM bank 数；“12-bank／4-lane”
+表示 `N=4、M=12`。每个 PASS 只适用于表中注明的边界；制造 sign-off 以
 [docs/07-verification-and-signoff.md](docs/07-verification-and-signoff.md) 为准。
 
 | 项目 | 方法 | 状态 |

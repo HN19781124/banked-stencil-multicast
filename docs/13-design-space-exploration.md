@@ -1,6 +1,6 @@
 # 設計空間試算と次の検証候補
 
-この資料は、`N` レーン／`T` tap の候補を同じ前提で比較し、次にRTLへ持ち込む構成を再現可能に選ぶためのものです。試算は一次モデルであり、配置配線後の周波数、電力、面積、SRAM macro sign-offを保証しません。
+この資料は、`N` レーン／`M` 物理SRAM bank／`T` tap の候補を同じ前提で比較し、次にRTLへ持ち込む構成を再現可能に選ぶためのものです。ここでは`N`をレーン数、`M`をバンク数として固定します。試算は一次モデルであり、配置配線後の周波数、電力、面積、SRAM macro sign-offを保証しません。
 
 ## 1. 実行方法
 
@@ -39,7 +39,7 @@ complex MACは、複素乗算4乗算＋加算と累積加算を合わせた8 rea
 
 デフォルトは`N=1..32`、`T=3`、complex FP16の4 byte/sample、100 MHz、1024 word/bankです。選定用の設計 envelopeは、基準の3倍に相当する`capacity <= 144 KiB`、直接接続時の`multicast endpoints <= 48`、重複削減率`>= 60%`としました。これは法則から自動的に決まる唯一の最適値ではなく、比較可能な予算を固定するための公開した仮定です。下表は代表行で、全候補はJSON／CSVに保存されます。
 
-| N | U | M | 削減率 | 容量 KiB | read GB/s | 合計 GB/s | serialized GFLOP/s | unrolled GFLOP/s | endpoints | 判定 |
+| N（lanes） | U（unique reads） | M（banks） | 削減率 | 容量 KiB | read GB/s | 合計 GB/s | serialized GFLOP/s | unrolled GFLOP/s | endpoints | 判定 |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
 | 4 | 6 | 12 | 50.0% | 48 | 2.4 | 4.0 | 3.2 | 9.6 | 12 | — |
 | 6 | 8 | 16 | 55.6% | 64 | 3.2 | 5.6 | 4.8 | 14.4 | 18 | — |
@@ -49,7 +49,7 @@ complex MACは、複素乗算4乗算＋加算と累積加算を合わせた8 rea
 | 24 | 26 | 52 | 63.9% | 208 | 10.4 | 20.0 | 19.2 | 57.6 | 72 | over envelope |
 | 32 | 34 | 68 | 64.7% | 272 | 13.6 | 26.4 | 25.6 | 76.8 | 96 | over envelope |
 
-この envelopeでの理論上の選択は**N=16、T=3、36 bank、18 unique read、16 write、48 multicast endpoint**です。`unrolled`ピークは100 MHz換算38.4 GFLOP/s、現在のMAC-4型の`serialized`換算は12.8 GFLOP/sです。直接配線なら48 endpoint、二分木ならlane-clusterの深さ目安は4段です。これは配線遅延を見積もった値ではありません。機械可読な候補定義は[`manufacturing/candidate-n16.json`](../manufacturing/candidate-n16.json)に固定します。
+この envelopeでの理論上の選択は**N=16、M=36 bank、T=3、18 unique read、16 write、48 multicast endpoint**です。`unrolled`ピークは100 MHz換算38.4 GFLOP/s、現在のMAC-4型の`serialized`換算は12.8 GFLOP/sです。直接配線なら48 endpoint、二分木ならlane-clusterの深さ目安は4段です。これは配線遅延を見積もった値ではありません。機械可読な候補定義は[`manufacturing/candidate-n16.json`](../manufacturing/candidate-n16.json)に固定します。
 
 基準N=4のRTL性能レポートにあるread 2.4 GB/s、write 1.6 GB/s、合計4.0 GB/sおよびserialized 3.2 GFLOP/sは、この一次モデルと一致します。一致はモデルの校正であって、N=16の物理性能を保証するものではありません。
 
@@ -66,6 +66,6 @@ N=16は、削減率60%を超えながら、容量144 KiBと48 endpointの境界�
 3. **Multicast equivalence** — `s_0..s_17`から各laneの`(s_j,s_{j+1},s_{j+2})`を生成し、16本等の直接配線とbuffered pyramidの両トポロジーで値・宛先・validを一致させる。pyramidにレジスタを入れた場合の追加latencyも測る。
 4. **Performance／backpressure** — serialized MACの`16/3 output/cycle`とunrolled MACの`16 output/cycle`を別ケースで測定し、input/output FIFOのstall、tail、行切替bubbleを記録する。
 5. **Formal／synthesis** — bank conflict、bank/address一意性、multicast宛先欠落、FIFO overflow、reset復帰をSAT／assertion／generic synthesisで確認する。
-6. **Physical exploration** — 36 bankと直接配線／pyramidを同一制約で配置配線し、wire length、fan-out、buffer数、timing、電力、macro面積を比較する。hold／antenna／qualified SRAMが閉じるまでは探索結果であり、製造sign-offではない。
+6. **Physical exploration** — `M=36` bankと直接配線／pyramidを同一制約で配置配線し、wire length、fan-out、buffer数、timing、電力、macro面積を比較する。hold／antenna／qualified SRAMが閉じるまでは探索結果であり、製造sign-offではない。
 
 各ゲートは基準N=4の結果を上書きせず、`N=16`専用のRTL、formal、性能、physical証跡として保存します。制約を変更した場合は、同じスクリプトで選定と検証計画を再生成できます。

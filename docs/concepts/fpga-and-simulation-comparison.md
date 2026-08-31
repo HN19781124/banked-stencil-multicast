@@ -2,7 +2,7 @@
 
 [English](fpga-and-simulation-comparison.en.md) · [简体中文](fpga-and-simulation-comparison.zh-Hans.md) · 日本語（正本）
 
-この付録は、現行の`N=4` baselineをFPGAへ移植した場合に何を確認できるか、また別方式とどの指標を比較できるかを整理する。FPGA実装や比較モデルは将来の評価候補であり、現行の公開結果・`v0.3.0`の内容固定・製造sign-offには含めない。
+この付録は、現行の`N=4`／`M=12` baselineをFPGAへ移植した場合に何を確認できるか、また別方式とどの指標を比較できるかを整理する。ここでは`N`をレーン数、`M`を物理SRAM bank数として表記する。FPGA実装や比較モデルは将来の評価候補であり、現行の公開結果・`v0.3.0`の内容固定・製造sign-offには含めない。
 
 ## 1. FPGAで確認できる範囲
 
@@ -11,7 +11,7 @@
 ```mermaid
 flowchart LR
     HOST[CPU／host] --> CTRL[AXI-Lite／制御面]
-    STREAM[AXI-Stream入力] --> ENGINE[N=4 engine RTL]
+    STREAM[AXI-Stream入力] --> ENGINE[N=4 / M=12 engine RTL]
     CTRL --> ENGINE
     ENGINE --> OUT[AXI-Stream出力]
     ENGINE --> MAP{FPGA implementation}
@@ -72,7 +72,7 @@ flowchart TD
 
 ## 3. 公開上の境界
 
-- 現行baselineの主張は、12-bank／4-laneのreference、RTL、formal、探索的physical evidenceに限る。
+- 現行baselineの主張は、`N=4`／`M=12`のreference、RTL、formal、探索的physical evidenceに限る。
 - FPGA vendor synthesis、実ボード、外部DDR、他方式のRTLは独立した評価物であり、追加されるまで未評価とする。
 - 比較モデルを追加する場合も、入力契約と測定スクリプトを固定し、baselineの数値を上書きしない。大サイズの再生は`python tools/compare_2d_dataflows.py --width 1024 --height 1024`で実行できる。
 - FPGA実装を実施しない場合でも、本付録の表は「何を測定可能か」の境界を示すだけで、測定済みを意味しない。

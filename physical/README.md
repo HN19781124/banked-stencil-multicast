@@ -22,5 +22,8 @@ IR-drop analysis at a 250 ns constraint. Hold and antenna violations remain;
 Magic/KLayout and SRAM-internal checks are not complete. The result is evidence
 of routability and a reproducible physical experiment, not tapeout sign-off.
 
+The published baseline notation is `N=4` lanes and `M=12` physical SRAM
+banks; larger `N`/`M` values are separate estimates or future candidates.
+
 Raw artifacts remain local because of size and third-party redistribution
 constraints. Their hashes are retained in the evidence reports.

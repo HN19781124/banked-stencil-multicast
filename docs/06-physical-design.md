@@ -33,7 +33,7 @@ Authority:
 
 ## 3. Floorplan
 
-12個のSRAM macroをcompute/multicast coreの周囲へ対称配置し、read pinからoperand registerまでの距離差を抑える。推奨配置は左右6 bank、中央にscheduler/multicast/MAC、上端にCSR/FIFO、下端にDFT/MBISTである。
+`M=12`個のSRAM macroをcompute/multicast coreの周囲へ対称配置し、read pinからoperand registerまでの距離差を抑える。推奨配置は左右6 bank、中央にscheduler/multicast/MAC、上端にCSR/FIFO、下端にDFT/MBISTである。
 
 必須項目:
 

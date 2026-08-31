@@ -2,7 +2,7 @@
 
 [日本語（正本）](VALIDATION.md) · [English](VALIDATION.en.md) · [简体中文](VALIDATION.zh-Hans.md)
 
-初期開示の中核スケジューラを基準として、周辺機能と物理実装を段階的に追試した。各PASSは表に記載した境界だけに適用し、製造sign-offの合否条件は[`docs/07-verification-and-signoff.md`](docs/07-verification-and-signoff.md)をauthorityとする。
+初期開示の中核スケジューラを基準として、周辺機能と物理実装を段階的に追試した。ここでは`N`をレーン数、`M`を物理SRAM bank数とし、「12-bank／4-lane」は`N=4`／`M=12`を指す。各PASSは表に記載した境界だけに適用し、製造sign-offの合否条件は[`docs/07-verification-and-signoff.md`](docs/07-verification-and-signoff.md)をauthorityとする。
 
 | 項目 | 検証方法 | 状態 |
 |---|---|---|

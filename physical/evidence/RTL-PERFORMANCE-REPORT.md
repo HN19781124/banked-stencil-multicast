@@ -1,13 +1,13 @@
 # RTL性能計測レポート
 
-基準12-bank／4-lane／3-tapの`banked_stencil_engine`を、behavioral SRAMモデルで測定した。これはRTLの機能・定常間隔の測定であり、配置配線後の周波数、電力、SRAM macro sign-offを保証しない。
+基準`N=4`／`M=12` bank／`T=3` tapの`banked_stencil_engine`を、behavioral SRAMモデルで測定した。ここでは`N`をlane数、`M`を物理SRAM bank数として表記する。これはRTLの機能・定常間隔の測定であり、配置配線後の周波数、電力、SRAM macro sign-offを保証しない。
 
 ## 固定条件
 
 - ケース: logical width 17、height 3、padded width 24
 - 入力18 beat、出力15 beat（各行の最後は1 lane）
-- 12 bank、4 lane、3 tap、1 beatあたり128 bit、clock period 10 ns
-- 1 issueのユニーク読み出し6 bank、入力beatのprefetch書き込み4 bank
+- `M=12` bank、`N=4` lane、`T=3` tap、1 beatあたり128 bit、clock period 10 ns
+- 1 issueのユニーク読み出し`U=6` bank、入力beatのprefetch書き込み4 bank（write count=`N=4`）
 - `nostall`: 入力をready時に連続提示、出力ready固定1
 - `stress`: 固定LFSRによる入力間隔＋出力backpressure
 - サンプルタイルのアクセス語数: 読み出し15×6=90、書き込み18×4=72
@@ -72,7 +72,7 @@ docker run --rm -v "$WORKTREE:/work" -w /work --entrypoint bash \
 
 今回の17x3 tileでは、全体の有効lane結果は51個で、100 MHz換算のtransaction時間は`nostall` 710 ns（51/71=0.718 lane結果/cycle）、`stress` 810 ns（51/81=0.630 lane結果/cycle）だった。前者の定常値はREQ-PERF-002の4-lane/3-cycle条件に一致するが、REQ-PERF-001の全corner 100 MHzは未検証である。
 
-比較用のN=6／16-bank案は、read 8×32 bit=3.2 GB/s、write 6×32 bit=2.4 GB/s、合計5.6 GB/s（100 MHz換算）、理想lane比1.5倍と見積もれる。ただしこれは提案値であり、RTL・formal・物理測定は未実施である。
+比較用の`N=6`／`M=16` bank案は、read 8×32 bit=3.2 GB/s、write 6×32 bit=2.4 GB/s、合計5.6 GB/s（100 MHz換算）、理想lane比1.5倍と見積もれる。ただしこれは提案値であり、RTL・formal・物理測定は未実施である。
 
 ## 指標別まとめ（実測／試算／未検証）
 
@@ -149,4 +149,4 @@ docker run --rm -v "$WORKTREE:/work" -w /work --entrypoint bash \
 
 ## 境界
 
-今回の`stress`では出力FIFOがバックプレッシャを吸収し、入力handshake stallは0だった。外部DMA、任意サイズ長時間トラフィック、CDC、gate/SDF、qualified SRAM、全corner STA、電力、16-bank／3D拡張は別検証項目である。16-bank案と3Dツリー案はこの測定結果に含めず、実装時に独立したRTL・formal・物理再検証を行う。
+今回の`stress`では出力FIFOがバックプレッシャを吸収し、入力handshake stallは0だった。外部DMA、任意サイズ長時間トラフィック、CDC、gate/SDF、qualified SRAM、全corner STA、電力、`M=16` bank／3D拡張は別検証項目である。`M=16` bank案と3Dツリー案はこの測定結果に含めず、実装時に独立したRTL・formal・物理再検証を行う。

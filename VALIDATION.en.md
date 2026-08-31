@@ -3,7 +3,8 @@
 [日本語（正本）](VALIDATION.md) · English · [简体中文](VALIDATION.zh-Hans.md)
 
 The surrounding functions and physical-flow checks were replayed against the
-initial bank-scheduler disclosure. Each PASS applies only to the boundary in
+initial bank-scheduler disclosure. Here `N` denotes lane count and `M` physical
+SRAM-bank count; “12-bank / 4-lane” means `N=4, M=12`. Each PASS applies only to the boundary in
 the table; manufacturing sign-off authority remains
 [docs/07-verification-and-signoff.md](docs/07-verification-and-signoff.md).
 

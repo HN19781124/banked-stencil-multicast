@@ -9,6 +9,9 @@ every physical implementation can eliminate line or plane storage. The point
 is to separate the logical overlap of neighboring windows from the physical
 movement and delivery of their samples.
 
+Here `N` always denotes lane count, `M` physical SRAM-bank count, and `T` tap
+count. `N` and `M` are independent design parameters.
+
 ## 1. Why the window representation matters
 
 Stencil operators occur in image processing, physical simulation, numerical

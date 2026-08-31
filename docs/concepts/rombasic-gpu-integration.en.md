@@ -3,7 +3,7 @@
 [日本語（正本）](rombasic-gpu-integration.md) · English · [简体中文](rombasic-gpu-integration.zh-Hans.md)
 
 > This is a future integration note. It is not part of the measured
-> 12-bank/4-lane baseline, the v0.3.0 sign-off, or a performance guarantee.
+> `N=4`/`M=12` baseline, the v0.3.0 sign-off, or a performance guarantee.
 
 ## Why a BASIC-like control description
 

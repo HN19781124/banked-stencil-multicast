@@ -2,8 +2,9 @@
 
 [日本語（正本）](asic-linebuffer-comparison.md) ／ [English](asic-linebuffer-comparison.en.md) ／ 简体中文
 
-本文是将相同的 3x3 stencil、四个 lane 和 4-byte 复数 sample 放入 ASIC
-时的 reference-only 模型。两条路径使用相同的输入、计算和输出契约，但
+本文是将相同的 `N=4` lane、`M=36` bank 候选、3x3 stencil 和 4-byte 复数
+sample 放入 ASIC 时的 reference-only 模型。这里固定 `N` 表示 lane 数，`M`
+表示物理 SRAM bank 数。两条路径使用相同的输入、计算和输出契约，但
 仓库尚无 line-buffer RTL、统一 PDK 的布局布线或 technology-calibrated
 功耗，因此活动计数不是绝对功耗测量。
 
@@ -12,7 +13,7 @@
 ~~~mermaid
 flowchart LR
     IN[共同输入 tile<br/>complex sample] --> LB[line-buffer<br/>3-row SRAM + window registers]
-    IN --> BM[banked multicast<br/>36-bank 候选]
+    IN --> BM[banked multicast<br/>N=4 / M=36-bank 候选]
     LB --> LMAC[共同四 lane 复数 MAC]
     BM --> BMAC[共同四 lane 复数 MAC]
     LMAC --> OUT[共同输出 FIFO／stream]
@@ -64,7 +65,7 @@ Halo 容量；其容量、保持功耗和配线成本不会自动出现在计数
           + F_BM*e_multicast_fanout + C*e_common
 
 S_LB 表示 window-register 移动，F_BM 表示 multicast fan-out。现有
-11.434 mW 的 N=4 SKY130 探索是独立的 banked ASIC 锚点，不是本 2D
+11.434 mW 的 `N=4`／`M=12` SKY130 探索是独立的 banked ASIC 锚点，不是本 2D
 比较的数值。
 
 本文是简体中文伴随概要；详细技术正本仍为日文文件。

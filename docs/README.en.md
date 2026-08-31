@@ -4,6 +4,8 @@
 
 This directory contains the requirements, interface contracts, verification
 boundaries, and physical-design evidence for the banked-stencil data path.
+Throughout the dossier, `N` means lane count and `M` means physical SRAM-bank
+count; “12-bank / 4-lane” therefore always means `N=4, M=12`.
 The Japanese numbered files remain the detailed technical source of truth;
 this page provides an English navigation layer without silently changing
 numbers or claims.

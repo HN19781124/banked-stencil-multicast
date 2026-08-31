@@ -2,9 +2,11 @@
 
 [日本語（正本）](fpga-and-simulation-comparison.md) ／ [English](fpga-and-simulation-comparison.en.md) ／ 简体中文
 
-本文是说明性伴随资料，说明将已测量的 N=4 基线映射到 FPGA 时可以检查
+本文是说明性伴随资料，说明将已测量的 `N=4、M=12` 基线映射到 FPGA 时可以检查
 哪些内容，以及哪些量适合在相同条件下比较。它不是新的测量结果，也不
 属于 v0.3.0 的硬件 sign-off。
+
+下文中 `N` 表示 lane 数，`M` 表示物理 SRAM bank 数。
 
 ## FPGA 可观察的量
 
@@ -14,7 +16,7 @@ AXI 侧接口。固定目标器件和工具流程后，可以从相同 RTL 得�
 ~~~mermaid
 flowchart LR
     HOST["CPU／主机"] --> CTRL["AXI-Lite／控制面"]
-    STREAM["AXI-Stream 输入"] --> ENGINE["N=4 engine RTL"]
+    STREAM["AXI-Stream 输入"] --> ENGINE["N=4 / M=12 engine RTL"]
     CTRL --> ENGINE
     ENGINE --> OUT["AXI-Stream 输出"]
     ENGINE --> MAP{"FPGA 实现"}

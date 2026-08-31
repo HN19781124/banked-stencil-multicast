@@ -6,7 +6,7 @@
 
 > Defensive publication and executable reference design for conflict-free streaming stencils using single-port banked SRAM, overlap-eliminated reads, fixed multicast delivery, and ping-pong buffering.
 
-This repository documents a **programmable streaming coprocessor outlook** for regular complex-valued local-stencil workloads. It separates the measured N=4 data path from unimplemented scaling and control-plane extensions.
+This repository documents a **programmable streaming coprocessor outlook** for regular complex-valued local-stencil workloads. `N` denotes the parallel lane count and `M` denotes the physical SRAM-bank count; these symbols are kept separate throughout the design-space discussion. It separates the measured N=4 data path from unimplemented scaling and control-plane extensions.
 
 ## Status and scope
 
@@ -29,7 +29,7 @@ flowchart LR
     end
 
     subgraph DATA["Data plane"]
-        IN["Input stream / DMA boundary"] --> SRAM["Static SRAM<br/>12 banks / single-port"]
+        IN["Input stream / DMA boundary"] --> SRAM["Static SRAM<br/>M=12 banks / single-port"]
         SRAM --> UNIQUE["Unique samples"]
         UNIQUE --> MCAST["Fixed multicast network"]
         MCAST --> MAC["Complex MAC lanes<br/>N=4 baseline"]
@@ -60,7 +60,7 @@ The comparison with a line-buffer path is conservative: the line-buffer model is
 
 ## Specific space-use target (not evaluated)
 
-One candidate evaluation frame is preprocessing complex I/Q (or equivalent complex samples) received by a low-Earth-orbit satellite before demodulation and decoding. Optical acquisition and tracking, modem selection, FEC／decoding, flight control, propulsion, crew safety, deep-space communications, and spacecraft-wide qualification are out of scope. Neither the measured N=4 baseline nor the 18-bank 1R1W candidate is flight-, radiation-, or thermal-vacuum-qualified. Two-port memory relaxes the access-slot constraint but does not solve SRAM radiation behavior or heat removal by itself.
+One candidate evaluation frame is preprocessing complex I/Q (or equivalent complex samples) received by a low-Earth-orbit satellite before demodulation and decoding. Optical acquisition and tracking, modem selection, FEC／decoding, flight control, propulsion, crew safety, deep-space communications, and spacecraft-wide qualification are out of scope. Neither the measured N=4 baseline nor the `M=18` 1R1W candidate is flight-, radiation-, or thermal-vacuum-qualified. Two-port memory relaxes the access-slot constraint but does not solve SRAM radiation behavior or heat removal by itself.
 
 | Evaluation item | Checks for this target | Current status |
 |---|---|---|
@@ -75,7 +75,7 @@ One candidate evaluation frame is preprocessing complex I/Q (or equivalent compl
 
 ~~~mermaid
 flowchart LR
-    C[18-bank 1R1W candidate<br/>complex I/Q preprocessing] --> R[Radiation]
+    C[M=18 bank / 1R1W candidate<br/>complex I/Q preprocessing] --> R[Radiation]
     C --> T[Thermal-vacuum and power]
     C --> L[BER / EVM / synchronization / link margin]
     C --> D[Determinism and fault recovery]

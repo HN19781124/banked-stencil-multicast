@@ -2,7 +2,7 @@
 
 ## 1. 製品定義
 
-`NB2-SMA-01`は、複素FP16の1D三点ステンシルを対象とする4レーン・ストリーミングIPブロックである。12個のsingle-port SRAM bank、重複読出し除去、6サンプルから4組の三入力窓を生成する同報網、複素積和、ストリーム入出力、制御／診断機能を含む。
+`NB2-SMA-01`は、複素FP16の1D三点ステンシルを対象とする`N=4`レーン・ストリーミングIPブロックである。`M=12`個のsingle-port SRAM bank、重複読出し除去、6サンプルから4組の三入力窓を生成する同報網、複素積和、ストリーム入出力、制御／診断機能を含む。
 
 初回製造基準は独立したIP blockであり、CPU、外部DRAM PHY、PLL、pad ring、package、boardは統合側の責任範囲とする。公開PDK版は試作・設計検証用で、商用品はfoundry-qualified PDKへ再実装する。
 
@@ -10,10 +10,10 @@
 
 | 項目 | 基準値 |
 |---|---|
-| lane / tap | 4 / 3 |
+| lane / tap | `N=4` / `T=3` |
 | sample | complex binary16、32 bit |
 | accumulation | binary32 |
-| SRAM | 12 bank、各1024×32 bit、single port |
+| SRAM | `M=12` bank、各1024×32 bit、single port |
 | input / output stream | AXI4-Stream、各128 bit |
 | control | AXI4-Lite、32 bit data / 12 bit address |
 | target clock | 100 MHz（10 ns） |

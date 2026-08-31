@@ -2,7 +2,7 @@
 
 ## 1. SRAM organization
 
-初回基準は12 bank、各1024 word、word幅32 bit、single-port synchronous SRAM、read latency 1 cycleとする。論理buffer A/Bは同一bank群の異なるdepth範囲へ配置する。
+初回基準は`M=12` bank、各1024 word、word幅32 bit、single-port synchronous SRAM、read latency 1 cycleとする。論理buffer A/Bは同一bank群の異なるdepth範囲へ配置する。
 
 ```text
 bank 0..11:
@@ -15,13 +15,13 @@ bank 0..11:
 ## 2. Mapping
 
 ```text
-B_b(x,y) = (x + 2*y + phi_b) mod 12
+B_b(x,y) = (x + 2*y + phi_b) mod M
 phi_A = 0
 phi_B = 6
-A_b(x,y) = base_b + y*(Wp/12) + floor(x/12)
+A_b(x,y) = base_b + y*(Wp/M) + floor(x/M)
 ```
 
-`x`は左Haloを0とした非負の物理座標である。`Wp`は12の倍数で、right Halo、無効lane、bank alignment paddingを含む。`(bank,address)`はtile内で一意でなければならない。
+`x`は左Haloを0とした非負の物理座標である。`Wp`は`M=12`の倍数で、right Halo、無効lane、bank alignment paddingを含む。`(bank,address)`はtile内で一意でなければならない。
 
 ## 3. Row / Halo policy
 

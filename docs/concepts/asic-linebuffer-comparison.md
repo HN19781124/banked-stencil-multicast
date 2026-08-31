@@ -2,14 +2,14 @@
 
 [English](asic-linebuffer-comparison.en.md) · [简体中文](asic-linebuffer-comparison.zh-Hans.md) · 日本語（正本）
 
-この資料は、同じ3×3・4レーン・4-byte複素サンプルをASICへ置いた場合に、ラインバッファ方式とbanked multicast方式を同じ入力・演算・出力契約で比較するための参考モデルである。ラインバッファRTL、共通PDKの配置配線、technology-calibrated power modelはまだないため、ここでの電力は絶対値を出さず、構造上の活動カウンタと測定条件だけを固定する。
+この資料は、同じ`N=4`レーン・`M=36` bank候補・3×3・4-byte複素サンプルをASICへ置いた場合に、ラインバッファ方式とbanked multicast方式を同じ入力・演算・出力契約で比較するための参考モデルである。ここでは`N`をレーン数、`M`を物理SRAM bank数として表記する。ラインバッファRTL、共通PDKの配置配線、technology-calibrated power modelはまだないため、ここでの電力は絶対値を出さず、構造上の活動カウンタと測定条件だけを固定する。
 
 ## 比較境界
 
 ```mermaid
 flowchart LR
     IN[共通入力tile<br/>complex sample] --> LB[ラインバッファ<br/>3-row SRAM + window registers]
-    IN --> BM[banked multicast<br/>36-bank candidate]
+    IN --> BM[banked multicast<br/>N=4 / M=36-bank candidate]
     LB --> LMAC[共通4-lane complex MAC]
     BM --> BMAC[共通4-lane complex MAC]
     LMAC --> OUT[共通出力FIFO／stream]
@@ -38,7 +38,7 @@ flowchart LR
 | storage access合計 | 3,151,880（3.006／output） | 5,773,320（5.506／output） | 読書きの単純合計 |
 | logical window values | 9,437,184（9.000／output） | 9,437,184（9.000／output） | 共通MAC入力数 |
 | multicast deliveries | 0 | 9,437,184（9.000／output） | banked配線カウンタ |
-| bank count | 実装依存のline SRAM／window register | 36（2D候補） | 物理macro数ではない |
+| M（bank count） | 実装依存のline SRAM／window register | 36（2D候補） | 物理macro数ではない |
 | core cycles | 262,145 | 262,145 | preload済み・停止なしのreference |
 | end-to-end cycles | 263,683 | 525,827（load直列） | 停止なし上限。banked overlap上限は263,682 |
 
@@ -58,7 +58,7 @@ $$
 
 ここで`C`は共通MAC／I/O／制御、`S_LB`はラインバッファのwindow-register移動、`F_BM`はbanked multicastの配線fan-outである。`e_*`はSRAM macro、標準セル、配線負荷、clock、電圧、PVT、activityから取得する。機能referenceだけでは`S_LB`と`F_BM`の電気的重みを決められないため、どちらが低電力かはまだ結論しない。
 
-現行`N=4`／12-bankの11.434 mWは、別のSKY130 OpenROAD探索runにおけるbanked ASICアンカーであり、ラインバッファの値でも、この2D比較の共通値でもない。2ユニット複製の22.868 mW試算も同じ理由で、この比較へ直接転記しない。
+現行`N=4`／`M=12` bankの11.434 mWは、別のSKY130 OpenROAD探索runにおけるbanked ASICアンカーであり、ラインバッファの値でも、この2D比較の共通値でもない。2ユニット複製の22.868 mW試算も同じ理由で、この比較へ直接転記しない。
 
 ## 読み取れる範囲と次の境界
 

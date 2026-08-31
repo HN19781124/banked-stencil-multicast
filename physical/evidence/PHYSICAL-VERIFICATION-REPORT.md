@@ -2,7 +2,7 @@
 
 Date: 2026-08-29  
 Run: `sky130-pnr-250ns-hold1`  
-Target: SKY130, 12-bank / 4-lane / 3-tap banked-stencil accelerator
+Target: SKY130, `N=4` lanes / `M=12` banks / `T=3` taps banked-stencil accelerator
 
 The reproducible RTL/formal baseline was rerun on this worktree: **24/24 checks PASS** (`build/verification-report-container-digest-20260829.json`, SHA-256 `48a456c9fbccc60d1fa4ba571675f1d64cf740154c7446819f366927c9fbbd6d`).
 

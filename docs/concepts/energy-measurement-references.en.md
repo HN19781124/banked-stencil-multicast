@@ -40,8 +40,8 @@ counts. Power is unmeasured.
 
 ## Appendix: first-order unit replication model
 
-The 4 MHz SKY130 exploratory run provides an 11.434 mW anchor for one N=4,
-12-bank unit. Under the deliberately ideal model
+The 4 MHz SKY130 exploratory run provides an 11.434 mW anchor for one
+`N=4, M=12` unit. Under the deliberately ideal model
 P(n) = n x (10.582 + 0.852) mW, shared logic, extra routing, external
 bandwidth, and inter-unit backpressure are zero. Two units at 22.868 mW are
 therefore a first-order extrapolation, not measured power, thermal margin, or
@@ -62,7 +62,7 @@ python tools/estimate_power_scaling.py --units 1,2 --report physical/evidence/po
 
 The model does not mean that duplicating a single-port unit works
 unconditionally. Re-check each unit's read/write bank sets, input partition,
-DMA/FIFO contention, and external bandwidth. The 18-bank 1R1W
+DMA/FIFO contention, and external bandwidth. The `M=18` 1R1W
 register-exchange option is a separate candidate.
 
 This is an English companion summary; the Japanese file remains the detailed

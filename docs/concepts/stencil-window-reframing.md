@@ -10,6 +10,9 @@
 > English: [stencil-window-reframing.en.md](stencil-window-reframing.en.md)<br>
 > 简体中文: [stencil-window-reframing.zh-Hans.md](stencil-window-reframing.zh-Hans.md)
 
+以下では、`N`を並列レーン数、`M`を物理SRAM bank数、`T`をtap数として
+記載します。`N`と`M`は別の設計パラメータです。
+
 ステンシル計算は、画像処理、物理シミュレーション、数値計算、AI向け
 アクセラレータなどで繰り返し現れる基本操作です。各出力要素が周囲の
 小さな入力窓に依存するため、計算式は単純でも、データの表現方法が

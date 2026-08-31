@@ -2,10 +2,12 @@
 
 [日本語（正本）](fpga-and-simulation-comparison.md) · English · [简体中文](fpga-and-simulation-comparison.zh-Hans.md)
 
-This companion note explains what can be checked when the measured N=4
+This companion note explains what can be checked when the measured `N=4, M=12`
 baseline is mapped to an FPGA, and which quantities are suitable for a
 same-condition comparison. It is an evaluation plan, not a new measured
 result and not part of the v0.3.0 hardware sign-off.
+
+Here `N` is lane count and `M` is physical SRAM-bank count.
 
 ## FPGA-visible quantities
 
@@ -16,7 +18,7 @@ and tool flow, the same RTL can expose the following quantities:
 ~~~mermaid
 flowchart LR
     HOST["CPU / host"] --> CTRL["AXI-Lite / control plane"]
-    STREAM["AXI-Stream input"] --> ENGINE["N=4 engine RTL"]
+    STREAM["AXI-Stream input"] --> ENGINE["N=4 / M=12 engine RTL"]
     CTRL --> ENGINE
     ENGINE --> OUT["AXI-Stream output"]
     ENGINE --> MAP{"FPGA implementation"}

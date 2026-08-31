@@ -36,7 +36,7 @@ flowchart LR
     end
 
     subgraph DATA["データ面（data plane）"]
-        IN["入力ストリーム／DMA境界"] --> SRAM["静的SRAM<br/>現行：12-bank／single-port<br/>セル間シフトなし"]
+        IN["入力ストリーム／DMA境界"] --> SRAM["静的SRAM<br/>現行：M=12 bank／single-port<br/>セル間シフトなし"]
         SRAM --> UNIQUE["重複排除したunique samples"]
         UNIQUE --> MCAST["multicast配線網"]
         MCAST --> MAC["複素MAC lanes<br/>現行：N=4"]
@@ -62,12 +62,12 @@ ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）
 
 ここでの優位はMACの演算率そのものではありません。2Dの同条件referenceでは、ラインバッファと本方式が同じcore出力率・同じ最終結果になります。本方式は、窓のシフト／再配置をデータ面から外し、SRAM供給と演算を重畳できる余地を持つ点が優位です。一方、loadを直列化すれば本方式が速くなるわけではなく、FPGAのFmax・配線・電力を含む優劣は未測定です。外部の測定方法と比較条件は[電力・データ移動の外部参考文献](docs/concepts/energy-measurement-references.md)に整理しています。
 
-現行baselineが**single-port SRAMにこだわる**のは、true-dual-portの帯域で成立させるのではなく、一般的な1ポートbankを複数配置し、cycleごとのread／write bank集合を互いに素にできることを示すためです。したがって、ユニットを複製する場合も、入力分割・bank集合・DMA／FIFOの競合を別途検査する必要があります。18-bank 1R1Wのregister-exchange案はこのbaselineを置き換えるものではなく、別の将来候補です。
+現行baselineが**single-port SRAMにこだわる**のは、true-dual-portの帯域で成立させるのではなく、一般的な1ポートbankを複数配置し、cycleごとのread／write bank集合を互いに素にできることを示すためです。したがって、ユニットを複製する場合も、入力分割・bank集合・DMA／FIFOの競合を別途検査する必要があります。`M=18` bank・1R1Wのregister-exchange案はこのbaselineを置き換えるものではなく、別の将来候補です。
 
 不規則なアドレス、短い仕事、頻繁な分岐、backpressureが支配的な場合に同じ効果や固定遅延が得られるとは限りません。これは一般的な高速化保証ではなく、規則性の高い局所データフローに対する設計上の利点です。
 
 > [!NOTE]
-> 記号`N`はレーン数、`M`はbank数です。したがって現行の実証は「`N=4`／`M=12`（12-bank baseline）」であり、`N=12`レーンを実証済みとは扱いません。`N=12`レーンは一次試算、`M=12`の実証範囲は現行baselineとして別に記載します。
+> 記号`N`はレーン数、`M`はbank数です。したがって現行の実証は「`N=4`／`M=12`（`M=12` bank baseline）」であり、`N=12`レーンを実証済みとは扱いません。`N=12`レーンは一次試算、`M=12`の実証範囲は現行baselineとして別に記載します。
 
 ## 検証の順序：N=4実測 → N=6／N=16試算 → 検証境界
 
@@ -88,7 +88,7 @@ ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）
 
 ### 3. N=16／M=36：数学的導出（未実装の展望）
 
-同じ`T=3`、single-port、連続窓、ping-pong、同一行の前提で、`U=18`、`M=36`、phase差=18です。読み出し集合を連続18 bank、書き込み集合をその半周後の連続16 bankとすれば、`R_t∩W_t=∅`であり、buffer役割を交換しても同じ半周差が保たれます。これは無衝突条件の数学的導出であって、16-lane RTL、formal、backpressure、配線、P&R、実測性能の証明ではありません。候補の数値と検証ゲートは[設計空間試算資料](docs/13-design-space-exploration.md)と[候補JSON](manufacturing/candidate-n16.json)に分離しています。
+同じ`T=3`、single-port、連続窓、ping-pong、同一行の前提で、`U=18`、`M=36`、phase差=18です。読み出し集合を連続`U=18` bank、書き込み集合をその半周後の連続16 bank（書き込み数は`N=16`）とすれば、`R_t∩W_t=∅`であり、buffer役割を交換しても同じ半周差が保たれます。これは無衝突条件の数学的導出であって、16-lane RTL、formal、backpressure、配線、P&R、実測性能の証明ではありません。候補の数値と検証ゲートは[設計空間試算資料](docs/13-design-space-exploration.md)と[候補JSON](manufacturing/candidate-n16.json)に分離しています。
 
 ### 4. 検証境界
 
@@ -126,16 +126,16 @@ FPGAへ移植した場合に取得できる資源・Fmax・電力の境界と、
 
 ## 詳細：試算と次の検証候補
 
-候補の「最適」は目的関数と予算を固定しない限り一意ではありません。`tools/explore_design_space.py` は、同じ一次モデルで`N`レーン候補を掃引し、容量・オンチップ帯域・重複削減率・multicast endpoint・理想MAC性能を出力します。既定の設計 envelope（`T=3`、4 byte/sample、100 MHz、A/B合計144 KiB以下、endpoint 48以下、削減率60%以上）では、**N=16／36 bank／18 unique read／16 write**が最大の実行可能候補になります。
+候補の「最適」は目的関数と予算を固定しない限り一意ではありません。`tools/explore_design_space.py` は、同じ一次モデルで`N`レーン候補を掃引し、容量・オンチップ帯域・重複削減率・multicast endpoint・理想MAC性能を出力します。既定の設計 envelope（`T=3`、4 byte/sample、100 MHz、A/B合計144 KiB以下、endpoint 48以下、削減率60%以上）では、**N=16／M=36 bank／18 unique read／16 write**が最大の実行可能候補になります。
 
-| 候補 | unique read | bank | 容量 | read / 合計帯域 | 重複削減 | serialized / unrolled（100 MHz） |
+| 候補（N=lane） | unique read（U） | M（bank） | 容量 | read / 合計帯域 | 重複削減 | serialized / unrolled（100 MHz） |
 |---:|---:|---:|---:|---:|---:|---:|
 | N=4（実測基準） | 6 | 12 | 48 KiB | 2.4 / 4.0 GB/s | 50.0% | 3.2 / 9.6 GFLOP/s |
 | [N=12（一次試算）](docs/13-design-space-exploration.md) | 14 | 28 | 112 KiB | 5.6 / 10.4 GB/s | 61.1% | 9.6 / 28.8 GFLOP/s |
 | **N=16（数学的導出・次の検証候補）** | **18** | **36** | **144 KiB** | **7.2 / 13.6 GB/s** | **62.5%** | **12.8 / 38.4 GFLOP/s** |
 | N=24（一次試算・予算超過） | 26 | 52 | 208 KiB | 10.4 / 20.0 GB/s | 63.9% | 19.2 / 57.6 GFLOP/s |
 
-N=16は最終最適という意味ではなく、基準の3倍容量と48 endpointの境界に置く、尖った比較用ターゲットです。基準N=4のRTLレポート（read 2.4、write 1.6、合計4.0 GB/s／serialized 3.2 GFLOP/s）と一次モデルが一致することを校正に使います。N=16の性能値は未検証であり、**36-bankスケジュール、16-lane RTL、直接配線／buffered pyramidのmulticast等価性、formal、backpressure、同一制約のP&R比較**は必要な検証項目です。前提とゲートは[設計空間試算資料](docs/13-design-space-exploration.md)、機械可読な候補定義は[候補JSON](manufacturing/candidate-n16.json)に固定しています。
+N=16は最終最適という意味ではなく、基準の3倍容量と48 endpointの境界に置く、尖った比較用ターゲットです。基準`N=4`のRTLレポート（read 2.4、write 1.6、合計4.0 GB/s／serialized 3.2 GFLOP/s）と一次モデルが一致することを校正に使います。`N=16`の性能値は未検証であり、**`M=36` bankスケジュール、`N=16` lane RTL、直接配線／buffered pyramidのmulticast等価性、formal、backpressure、同一制約のP&R比較**は必要な検証項目です。前提とゲートは[設計空間試算資料](docs/13-design-space-exploration.md)、機械可読な候補定義は[候補JSON](manufacturing/candidate-n16.json)に固定しています。
 
 3 tapの対称bank familyでは毎cycle 2 bankが休止します。この休止bankは均熱やclock／power gatingに割り当てられる余地がありますが、温度・電力への効果は未測定です。
 
@@ -234,7 +234,7 @@ $$
 | 重複排除後の読み出し | 6 | 24 GB/s |
 | 次タイルの先読み書き込み | 4 | 16 GB/s |
 | 合計 | 10 | 40 GB/s |
-| 12バンクの理論上限 | 12 | 48 GB/s |
+| `M=12` bankの理論上限 | 12 | 48 GB/s |
 
 クロック周波数を $f$ GHzとした場合、合計オンチップ帯域は $40f$ GB/sです。
 
@@ -276,13 +276,13 @@ $$
 
 Bを読みAへ書く場合も、位相差は $-6\equiv6\pmod{12}$ となるため同様に無衝突です。異なる行を同時に読み書きする場合は、$2(y_w-y_r)$ を含めて書き込み開始phaseを再計算するか、行切替cycleを設けます。
 
-行端ではHaloを含むローカル座標へ変換し、4レーン境界および12バンク境界をpaddingします。定常部以外のHalo投入はprologue／epilogue cycleで処理します。
+行端ではHaloを含むローカル座標へ変換し、`N=4`レーン境界および`M=12` bank境界をpaddingします。定常部以外のHalo投入はprologue／epilogue cycleで処理します。
 
 ### 2.6 cycle単位のデータ経路
 
 1-cycle read latencyの同期SRAMを想定した最小パイプラインは次のとおりです。
 
-1. **P0 — Address:** 6 bankへread command、重ならない4 bankへDMA FIFOからwrite commandを発行
+1. **P0 — Address:** `U=6` bankへread command、重ならない4 bank（write count=`N=4`）へDMA FIFOからwrite commandを発行
 2. **P1 — SRAM:** 6サンプルを出力レジスタへ格納
 3. **P2 — Multicast:** サンプル $s_0\ldots s_5$ を各レーンへ配線
 4. **P3 — Compute:** Lane $j$ が $(s_j,s_{j+1},s_{j+2})$ を処理
@@ -311,7 +311,7 @@ B_b(x,y)=(x+2y+\phi_b)\bmod M,\qquad
 \phi_A=0,\quad\phi_B=U
 $$
 
-読み出し側は連続する $U$ bank、書き込み側は反対側の半周から連続する $N$ bankを使用します。役割を交換しても位相差は半周の $U$ のままなので、両方向で無衝突です。padding後の行幅 $W_p$ は $M$ の倍数とし、bank内アドレスは次式で与えます。
+読み出し側は連続する $U$ bank、書き込み側は反対側の半周から連続する $N$個のbank（書き込み数）を使用します。役割を交換しても位相差は半周の $U$ のままなので、両方向で無衝突です。padding後の行幅 $W_p$ は $M$ の倍数とし、bank内アドレスは次式で与えます。
 
 $$
 A_b(x,y)=base_b+y\frac{W_p}{M}+\left\lfloor\frac{x}{M}\right\rfloor
@@ -319,23 +319,23 @@ $$
 
 3 tap（$T=3$）の具体例は次のとおりです。
 
-| レーン数 $N$ | 論理要求 $3N$ | unique read $N+2$ | prefetch write $N$ | bank数 $2N+4$ | idle |
+| レーン数 $N$ | 論理要求 $3N$ | unique read $U=N+2$ | prefetch write $N$ | bank数 $M=2N+4$ | idle |
 |---:|---:|---:|---:|---:|---:|
 | 1 | 3 | 3 | 1 | 6 | 2 |
 | 2 | 6 | 4 | 2 | 8 | 2 |
 | 4 | 12 | 6 | 4 | 12 | 2 |
 | 8 | 24 | 10 | 8 | 20 | 2 |
-| $N$ | $3N$ | $N+2$ | $N$ | $2N+4$ | 2 |
+| $N$ | $3N$ | $N+2$ | $N$ | $M=2N+4$ | 2 |
 
-### 2.8 N=6／N=16バンク拡張案（展望）
+### 2.8 `N=6`レーン／`M=16`バンク、`N=16`レーン／`M=36`バンク拡張案（展望）
 
-基準の12-bank／4-wayを変更せず、比較用の拡張案として6レーン・16バンクを定義します。$N=6$では
+基準の`N=4`／`M=12`を変更せず、比較用の拡張案として`N=6`／`M=16`と`N=16`／`M=36`を定義します。`N`はレーン数、`M`は物理SRAMバンク数です。`N=6`では
 
 $$
 U=N+2=8,\qquad M=2U=16,\qquad \text{read}=8,\qquad \text{write}=6
 $$
 
-同一クロックでSRAM帯域が十分なら、4-way基準に対する理想的な出力率は $6/4=1.5$ 倍です。$W$ を出力点の幅（sample数）とし、6レーン単位でtile化して3 tapのHaloを加える場合、16 bank境界へ丸めた行幅（sample数）は
+同一クロックでSRAM帯域が十分なら、4-way基準に対する理想的な出力率は $6/4=1.5$ 倍です。$W$ を出力点の幅（sample数）とし、`N=6`レーン単位でtile化して3 tapのHaloを加える場合、`M=16` bank境界へ丸めた行幅（sample数）は
 
 $$
 W_p=16\left\lceil\frac{6\lceil W/6\rceil+2}{16}\right\rceil
@@ -345,7 +345,7 @@ $$
 
 同じ前提で$N=16$は$U=18$、$M=36$、phase差$=18$となります。これは読み出し18 bankと書き込み16 bankの集合を半周ずらして無衝突にできるという数学的導出であり、16-lane RTL／physical実測ではありません。
 
-1-wayは重複共有を持たない最小実施形態、2-way以上は隣接窓の共有による読み出し圧縮を持つ実施形態です。`reference/bank_schedule.py` は $N=1,2,4,8,16,32$ の両ping-pong方向をreference levelで確認対象にします。12-bank／4-way構成は、この一般式の $N=4,T=3$ に一致します。
+1-wayは重複共有を持たない最小実施形態、2-way以上は隣接窓の共有による読み出し圧縮を持つ実施形態です。`reference/bank_schedule.py` は $N=1,2,4,8,16,32$ の両ping-pong方向をreference levelで確認対象にします。`N=4`／`M=12`構成は、この一般式の $N=4,T=3$ に一致します。
 
 ## 3. 演算レーン
 
@@ -396,7 +396,7 @@ $$
 
 であり、演算数$A$そのものは一般の2D係数では減りません。N=4の横4レーンを3×3窓（$N_x=4,N_y=1,r=1$）で処理する場合は、$A=36$、$U=18$、$\eta_{read}=50\%$です。これは独立窓との物理読出し比較であり、ラインバッファ方式の外部入力数を意味しません。ラインバッファは、新規入力、内部read/write、保持容量、制御を同じ勘定で別途比較します。
 
-出力書込み数を$W=N_xN_y$とすると、単一ポートbankで同一cycleにread/writeを行うには、集合の条件$R_t\cap W_t=\varnothing$に加えて、単純な下限$M\ge U+W$があります。半周phaseで対称化する実施形態は$M=2U$を候補にでき、各bankが最大1 read＋1 writeを許す1R1W構成では$M\ge U$が候補になります。いずれもbank mapping、行端Halo、$(bank,address)$一意性、FIFO、配線遅延を別途検証する前提です。
+出力書込み数を$W=N_xN_y$とします（$N_x,N_y$は空間方向の出力点数であり、レーン数を表す$N$とは別の記号です）。単一ポートbankで同一cycleにread/writeを行うには、集合の条件$R_t\cap W_t=\varnothing$に加えて、単純な下限$M\ge U+W$があります。半周phaseで対称化する実施形態は$M=2U$を候補にでき、各bankが最大1 read＋1 writeを許す1R1W構成では$M\ge U$が候補になります。いずれもbank mapping、行端Halo、$(bank,address)$一意性、FIFO、配線遅延を別途検証する前提です。
 
 | 比較対象 | タップ使用数 | 物理入力読出し | 追加で数えるもの |
 |---|---:|---:|---|
@@ -462,7 +462,7 @@ flowchart TD
 
 次段階の候補は、隣接スライスのHalo面を直接配線またはピラミッド型マルチキャストツリーで共有する構成です。ツリーの階層化は配線負荷を分割しますが、SRAM帯域、バッファ深さ、各段の遅延と電力は独立に検証する必要があります。
 
-実装順序の候補は、(1) 3D座標・HaloのPython参照モデル、(2) 直列3D RTLとformal、(3) スライス間ツリーRTL、(4) 16／32バンクへの物理配置・配線・電力評価、です。各段階でバンク衝突、FIFOバックプレッシャ、fan-out、タイミングの再検証が必要です。
+実装順序の候補は、(1) 3D座標・HaloのPython参照モデル、(2) 直列3D RTLとformal、(3) スライス間ツリーRTL、(4) `M=16`／`M=32` bankへの物理配置・配線・電力評価、です。各段階でバンク衝突、FIFOバックプレッシャ、fan-out、タイミングの再検証が必要です。
 
 ## 付録B. ROMBASICマクロ命令展開層（未実装拡張）
 
@@ -476,27 +476,27 @@ ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）
 
 | 候補 | 構成上の可能性 | 現時点の境界 |
 |---|---|---|
-| レジスタ交換＋少数bank | 条件付きで可能。隣接laneの重複サンプルをoperand registerへ保持し、論理的なbank contextを二重化できる。18-bank 1R1Wで各bankのread／writeポート条件を満たす一次シミュレーションを[`reference/register_exchange.py`](reference/register_exchange.py)で確認済み | 物理bank数、single-portの同時access枠、SRAM容量は増えない。N-way RTL／formal／physicalは未検証 |
+| レジスタ交換＋少数bank | 条件付きで可能。隣接laneの重複サンプルをoperand registerへ保持し、論理的なbank contextを二重化できる。`M=18` bank・1R1Wで各bankのread／writeポート条件を満たす一次シミュレーションを[`reference/register_exchange.py`](reference/register_exchange.py)で確認済み | 物理bank数、single-portの同時access枠、SRAM容量は増えない。N-way RTL／formal／physicalは未検証 |
 | 時間空間ハイブリッドblocking | 可能な受け皿。spatial tile、temporal block、Halo、ping-pong、DMAを同じdescriptorで束ねられる | K深度、Halo面、追加buffer、backpressureを含む完全なスケジュールは未実装 |
 | 統一化IFによる異種演算・混在構成 | wrapper／adapterとして可能。既存stream契約の後段へ複素MAC、real／integer MAC、reduction等を選択接続できる | sideband、format、latency class、CDC、エラー規約の互換性は未検証 |
 
 ### C.1 レジスタ交換による論理bank contextの拡張
 
-「12バンクで24バンク相当」「18バンクで36バンク相当」という表現は、**論理的なoperand供給状態またはbuffer contextの相当**という意味に限定します。物理的なbank容量、single-portのaccess slot、配線本数が24／36バンクになることは意味しません。
+「`M=12` physical bankで24-bank相当」「`M=18` physical bankで36-bank相当」という表現は、**論理的なoperand供給状態またはbuffer contextの相当**という意味に限定します。物理的なbank容量、single-portのaccess slot、配線本数が24／36バンクになることは意味しません。
 
-隣接windowで次のissueにも残る`T-1`個のサンプルをlane間のoperand registerへ保持し、register exchange／forwardingで再利用すれば、定常部のSRAM readを`U=N+T-1`から新規サンプル数`N`へ近づけられる可能性があります。`N=4`、`T=3`なら、warm-up後のモデルはread 4＋write 4＝8 access／cycleであり、12物理bank内に収まります。ただし、これは6 read＋4 writeの現行baselineとは別スケジュールで、境界、stall、row切替を含むRTL／formal／physical evidenceはありません。
+隣接windowで次のissueにも残る`T-1`個のサンプルをlane間のoperand registerへ保持し、register exchange／forwardingで再利用すれば、定常部のSRAM readを`U=N+T-1`から新規サンプル数`N`へ近づけられる可能性があります。`N=4`、`T=3`なら、warm-up後のモデルはread 4＋write 4＝8 access／cycleであり、`M=12`物理bank内に収まります。ただし、これは6 read＋4 writeの現行baselineとは別スケジュールで、境界、stall、row切替を含むRTL／formal／physical evidenceはありません。
 
 このread 4／write 4が成立するには、選んだphaseとbank mappingでなお`R_t\cap W_t=\varnothing`を満たす必要があります。register exchangeのforwarding段数は規則区間の固定latencyへ加算されるため、現行の測定値をそのまま継承するものでもありません。
 
-`N=16`、`T=3`では、重複2サンプルをregisterへ残してもread 18→16、write 16で、同一cycleに32 access枠が必要です。したがって18個のsingle-port bankだけで36-bank scheduleと同じ同時read／write帯域を得ることはできません。成立させるには、少なくとも次のいずれかが必要です。
+`N=16`、`T=3`では、重複2サンプルをregisterへ残してもread 18→16、write 16で、同一cycleに32 access枠が必要です。したがって`M=18`のsingle-port bankだけで`M=36` scheduleと同じ同時read／write帯域を得ることはできません。成立させるには、少なくとも次のいずれかが必要です。
 
-同一cycleにregister交換後のread／writeを完了させる下限は、単純化したモデルで`M_{phys}\ge 2N`です。`N=16`なら少なくとも32個のsingle-port bank、または1 bankあたり2 access slotが必要で、18 bankはこの条件を満たしません。
+同一cycleにregister交換後のread／writeを完了させる下限は、単純化したモデルで`M_{phys}\ge 2N`です。`N=16`なら少なくとも32個のsingle-port bank、または1 bankあたり2 access slotが必要で、`M=18` bankはこの条件を満たしません。
 
-ただし、18個の物理bankを**各bank 1R1Wの真の2ポート**へ置き換える案なら、1 cycle当たり最大36 access slotを持てます。`N=16`、`T=3`では現行のread 18＋write 16＝34、register交換後でもread 16＋write 16＝32なので、各bankへのread／writeが最大2件に収まり、port arbitrationを含むscheduleを証明できれば同一cycleの帯域条件は満たせます。これは「18 bank×2 port＝36 access slot」という帯域相当であり、36個のsingle-port bankと同じ容量、配線長、面積、電力、固定latencyを意味しません。2ポートSRAM macroの1R1W仕様、同時同一address規則、bankごとの`access_count\le2`、タイミング、電力は未検証です。
+ただし、`M=18`の物理bankを**各bank 1R1Wの真の2ポート**へ置き換える案なら、1 cycle当たり最大36 access slotを持てます。`N=16`、`T=3`では現行のread 18＋write 16＝34、register交換後でもread 16＋write 16＝32なので、各bankへのread／writeが最大2件に収まり、port arbitrationを含むscheduleを証明できれば同一cycleの帯域条件は満たせます。これは「`M=18` bank×2 port＝36 access slot」という帯域相当であり、`M=36`個のsingle-port bankと同じ容量、配線長、面積、電力、固定latencyを意味しません。2ポートSRAM macroの1R1W仕様、同時同一address規則、bankごとの`access_count\le2`、タイミング、電力は未検証です。
 
-#### 18-bank 1R1Wポート条件の一次シミュレーション
+#### M=18 bank 1R1Wポート条件の一次シミュレーション
 
-`reference/register_exchange.py` は、上記候補をチップ実装なしで確認する一次モデルです。`N=16`／`T=3`、初回read=18、定常read=16＋write=16、保持する重複サンプル=2を固定し、各bankのread／writeポート上限を検査します。実行例は `python reference/register_exchange.py --cycles 37 --rows 4` です。
+`reference/register_exchange.py` は、上記候補をチップ実装なしで確認する一次モデルです。`N=16`／`M=18`／`T=3`、初回read=18、定常read=16＋write=16、保持する重複サンプル=2を固定し、各bankのread／writeポート上限を検査します。実行例は `python reference/register_exchange.py --cycles 37 --rows 4` です。
 
 一次モデルでの判定は、定常32 access／cycleを36 port slot中88.9%で処理し、1R1Wポート条件はPASS、single-port条件は不成立（read／write同一bankが14〜16）です。phase差2または16では定常の平均休止bankが1になりますが、これはポート活動のproxyであり、温度・電力・タイミングの結果ではありません。対応する自動テストは[`tests/test_register_exchange.py`](tests/test_register_exchange.py)です。
 
@@ -504,17 +504,17 @@ ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）
 - SRAM macroをdouble-pumpまたはdual-edge相当で動かす（実効的にはaccess slotを増やす）
 - write stagingを別の物理メモリまたは独立portへ分離する
 
-したがって、18→36（または12→24）は**論理供給の再利用・context数の表現**としては記載可能ですが、36-bankと同じ物理帯域・容量・固定遅延を保証する主張にはしません。
+したがって、`M=18` physical bank→36-bank相当（または`M=12` physical bank→24-bank相当）は**論理供給の再利用・context数の表現**としては記載可能ですが、`M=36` bankと同じ物理帯域・容量・固定遅延を保証する主張にはしません。
 
 ```mermaid
 flowchart LR
-    S12["12-bank physical SRAM<br/>A/B phase domains"] --> R12["register exchange<br/>overlap samples retained"]
+    S12["M=12 physical SRAM banks<br/>A/B phase domains"] --> R12["register exchange<br/>overlap samples retained"]
     R12 --> C12["24-bank-style logical operand context<br/>not 24 physical banks"]
-    C12 --> M4["N=4 MAC"]
+    C12 --> MAC4["N=4 MAC"]
 
-    S18["18-bank physical SRAM"] --> R18["register exchange<br/>conditional time-multiplex"]
+    S18["M=18 physical SRAM banks"] --> R18["register exchange<br/>conditional time-multiplex"]
     R18 --> C18["36-bank-style logical context<br/>not 36-bank same-cycle bandwidth"]
-    C18 --> M16["N=16 MAC"]
+    C18 --> MAC16["N=16 MAC"]
 
     classDef mem fill:#eff6ff,stroke:#2563eb,stroke-width:1px;
     classDef reg fill:#fef3c7,stroke:#d97706,stroke-width:1px;
@@ -523,7 +523,7 @@ flowchart LR
     class S12,S18 mem;
     class R12,R18 reg;
     class C12,C18 context;
-    class M4,M16 mac;
+    class MAC4,MAC16 mac;
 ```
 
 ### C.2 時間空間ハイブリッドblockingの受け皿
@@ -644,7 +644,7 @@ $B_{dram}=50$ GB/sは評価例であり、隠蔽の成立にはタイル寸法�
 
 完了済み：
 
-- [x] 12-bank／4-wayの定常無衝突scheduleとバンク内アドレス一意性
+- [x] `N=4`／`M=12`の定常無衝突scheduleとバンク内アドレス一意性
 - [x] 1／2／4／8／16／32-way一般式の両ping-pong方向をreference levelで列挙（全Python 64テスト。N-way RTL／physical実測ではない）
 - [x] 全36周期状態のRTL simulation
 - [x] 全入力状態のYosys SAT無衝突証明
@@ -679,13 +679,13 @@ $B_{dram}=50$ GB/sは評価例であり、隠蔽の成立にはタイル寸法�
 
 ### 8.1 特定宇宙用途：低軌道衛星のレーザー通信受信データ前処理（未評価）
 
-対象シナリオは、低軌道衛星のレーザー通信受信データ（複素I/Qまたは同等の複素サンプル）を、復調・復号の前段で規則的な局所フィルタ、相関、等化前処理へ通す用途に限定しています。光学系の捕捉・追尾、変復調方式、FEC／復号、飛行制御、推進、有人安全、宇宙機全般の認証は対象外です。本項は候補整理であり、現行の`N=4` baselineおよび18-bank 1R1W候補のいずれもflight qualification、放射線認証、熱真空認証を意味しません。特に2ポート化は帯域条件を緩和しますが、SRAM macroの放射線特性や発熱を自動的に解決しません。
+対象シナリオは、低軌道衛星のレーザー通信受信データ（複素I/Qまたは同等の複素サンプル）を、復調・復号の前段で規則的な局所フィルタ、相関、等化前処理へ通す用途に限定しています。光学系の捕捉・追尾、変復調方式、FEC／復号、飛行制御、推進、有人安全、宇宙機全般の認証は対象外です。本項は候補整理であり、現行の`N=4`／`M=12` baselineおよび`M=18` bank・1R1W候補のいずれもflight qualification、放射線認証、熱真空認証を意味しません。特に2ポート化は帯域条件を緩和しますが、SRAM macroの放射線特性や発熱を自動的に解決しません。
 
 | 評価項目 | 当該用途での確認点 | 現在地 |
 |---|---|---|
 | 放射線 | TID、SEU／SET／SEL、SRAM bit upset、ECC／parity、scrub周期 | 未評価 |
 | 熱真空 | 無対流環境での接合温度、伝導経路、熱サイクル、休止bankの効果 | 温度・電力モデル未実施 |
-| 電力・帯域 | 18-bank 1R1Wの同時read／write、ピーク電力、idle／gating、W／sample | ポート一次モデルのみ |
+| 電力・帯域 | `M=18` bank・1R1Wの同時read／write、ピーク電力、idle／gating、W／sample | ポート一次モデルのみ |
 | 通信品質 | BER／FER、EVM、同期捕捉、link margin、packet loss、処理遅延 | 通信データ・リンクモデル未評価 |
 | 決定性 | 規則区間の固定latency、backpressure、DRAM待ち、fault／reset復帰 | 規則区間の論理条件のみ |
 | 信頼性 | watchdog、ECC／parity、冗長化、エラー封じ込め、fault injection | 未実装 |
@@ -695,7 +695,7 @@ $B_{dram}=50$ GB/sは評価例であり、隠蔽の成立にはタイル寸法�
 
 ```mermaid
 flowchart LR
-    C[18-bank 1R1W候補<br/>complex I/Q preprocessing] --> R[放射線評価]
+    C[M=18 bank・1R1W候補<br/>complex I/Q preprocessing] --> R[放射線評価]
     C --> T[熱真空・電力評価]
     C --> L[BER／EVM／同期／link margin]
     C --> D[決定性・fault復帰]

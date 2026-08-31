@@ -3,7 +3,8 @@
 [日本語（正本）](fpga-linebuffer-comparison.md) ／ [English](fpga-linebuffer-comparison.en.md) ／ 简体中文
 
 本文定义相同 3-tap、4-lane 工作负载在 FPGA 上的公平 reference 比较。
-两条路径使用密集的 4-byte 复数 sample 网格和 2D reference 模型；尚未
+这里固定 `N` 为 lane 数、`M` 为物理 SRAM bank 数；1D 基线为
+`N=4、T=3、M=12`。两条路径使用密集的 4-byte 复数 sample 网格和 2D reference 模型；尚未
 在特定器件上完成布局布线，因此不宣称 FPGA 实现结果。
 
 ## 两条数据路径
@@ -19,7 +20,7 @@ flowchart LR
         LB0 --> LB1 --> LB2
     end
     subgraph BM["banked multicast 路径"]
-        BM0["静态 bank 配置<br/>12-bank 基线"]
+        BM0["静态 bank 配置<br/>M=12-bank 基线"]
         BM1["6 个 unique read"]
         BM2["固定 multicast"]
         BM3["四 lane MAC"]
@@ -30,8 +31,8 @@ flowchart LR
 ~~~
 
 两条路径共用 input FIFO、output FIFO、系数、FP16 adapter 规则、Halo、
-边界策略和 ready/valid 轨迹。1D 基线为 N=4、T=3、M=12；2D reference
-候选使用 18 个 unique read 和 M=36，但它不是 RTL 或 FPGA 测量。
+边界策略和 ready/valid 轨迹。2D reference 候选使用 18 个 unique read 和
+`M=36`，但它不是 RTL 或 FPGA 测量。
 
 ## 输入与实现契约
 
@@ -85,7 +86,7 @@ overlap 行是模型上限，不是已实现的调度。这里故意列出串行
 
 ## 当前状态
 
-已完成：banked N=4 reference、RTL、formal 检查，以及共同 2D 输出
+已完成：banked `N=4`／`M=12` reference、RTL、formal 检查，以及共同 2D 输出
 digest/cycle 基线。未完成：line-buffer RTL、vendor P&R、实板测量和
 统一 FPGA 结果。因此不宣称 FPGA 速度、面积或功耗优势。
 

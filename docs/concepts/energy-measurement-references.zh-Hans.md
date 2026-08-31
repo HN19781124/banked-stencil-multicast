@@ -37,7 +37,7 @@ Problem](https://doi.org/10.1109/ISSCC.2014.6757323)（2014，给出 45 nm
 
 ## 附录：单元复制的一次模型
 
-4 MHz SKY130 探索性 run 为一个 N=4、12-bank 单元提供 11.434 mW 锚点。
+4 MHz SKY130 探索性 run 为一个 `N=4、M=12` 单元提供 11.434 mW 锚点。
 有意采用理想模型 P(n) = n x (10.582 + 0.852) mW，其中 shared logic、
 额外配线、外部带宽和单元间 backpressure 均为零。因此两个单元的
 22.868 mW 只是一次外推，不是功耗实测、热裕量或制造 sign-off。
@@ -57,6 +57,6 @@ python tools/estimate_power_scaling.py --units 1,2 --report physical/evidence/po
 
 该模型不表示复制 single-port 单元即可无条件运行。必须重新检查各
 单元的 read/write bank 集合、输入分割、DMA/FIFO 竞争和外部带宽。
-18-bank 1R1W register-exchange 是独立候选。
+`M=18` bank・1R1W register-exchange 是独立候选。
 
 本文是简体中文伴随概要；详细技术正本仍为日文文件。

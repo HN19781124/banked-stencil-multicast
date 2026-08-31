@@ -3,9 +3,10 @@
 [日本語（正本）](fpga-linebuffer-comparison.md) · English · [简体中文](fpga-linebuffer-comparison.zh-Hans.md)
 
 This companion defines a fair reference comparison for the same 3-tap,
-4-lane workload on an FPGA. It uses the dense 4-byte complex-sample grid and
-the 2D reference model; it does not claim that either path has already been
-placed and routed on a particular device.
+4-lane workload on an FPGA. Here `N` is the lane count and `M` is the physical
+SRAM-bank count; the 1D baseline is `N=4, T=3, M=12`. It uses the dense
+4-byte complex-sample grid and the 2D reference model; it does not claim that
+either path has already been placed and routed on a particular device.
 
 ## Two data paths
 
@@ -20,7 +21,7 @@ flowchart LR
         LB0 --> LB1 --> LB2
     end
     subgraph BM["banked multicast path"]
-        BM0["static bank placement<br/>12-bank baseline"]
+        BM0["static bank placement<br/>M=12-bank baseline"]
         BM1["six unique reads"]
         BM2["fixed multicast"]
         BM3["four-lane MAC"]
@@ -31,8 +32,8 @@ flowchart LR
 ~~~
 
 Both paths share the input FIFO, output FIFO, coefficients, FP16 adapter
-rules, Halo, boundary policy, and ready/valid trace. The 1D baseline is
-N=4, T=3, M=12. A 2D reference candidate uses 18 unique reads and M=36;
+rules, Halo, boundary policy, and ready/valid trace. A 2D reference candidate
+uses 18 unique reads and `M=36`;
 that candidate is not an RTL or FPGA measurement.
 
 ## Input and implementation contract
@@ -91,7 +92,7 @@ cost. The complete conditions and counters are in
 
 ## Current status
 
-Completed: banked N=4 reference, RTL, formal checks, and the common 2D output
+Completed: banked `N=4`/`M=12` reference, RTL, formal checks, and the common 2D output
 digest/cycle baseline. Not completed: line-buffer RTL, vendor P&R, board
 measurement, and a unified FPGA result. Therefore no FPGA speed, area, or
 power advantage is claimed.

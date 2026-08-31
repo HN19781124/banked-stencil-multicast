@@ -32,7 +32,7 @@
 
 ## 付録：ユニット複製の一次電力モデル
 
-現行の`N=4`／12-bank baselineに対して、SKY130探索runのOpenROAD見積（4 MHz、nominal TT、合計11.434 mW）を1ユニットのアンカーとして、同じclockとtransaction率が独立に保たれる場合の複製コストを機械的に計算できるようにした。既定モデルは`P(n)=n*(10.582+0.852) mW`で、shared logic、追加配線、外部帯域、ユニット間backpressureはゼロとしている。したがって2ユニットの22.868 mWは理想的な一次外挿であり、実電力・熱余裕・製造sign-offではない。
+現行の`N=4`／`M=12` baselineに対して、SKY130探索runのOpenROAD見積（4 MHz、nominal TT、合計11.434 mW）を1ユニットのアンカーとして、同じclockとtransaction率が独立に保たれる場合の複製コストを機械的に計算できるようにした。既定モデルは`P(n)=n*(10.582+0.852) mW`で、shared logic、追加配線、外部帯域、ユニット間backpressureはゼロとしている。したがって2ユニットの22.868 mWは理想的な一次外挿であり、実電力・熱余裕・製造sign-offではない。
 
 | 交通条件 | units | power（mW） | ideal throughput（Mresult/s） | energy（nJ/result） | performance/W（Mresult/s/W） |
 |---|---:|---:|---:|---:|---:|
@@ -49,4 +49,4 @@ python tools/estimate_power_scaling.py \
   --report physical/evidence/power-scaling-estimate-20260831.json
 ```
 
-このモデルは現行のsingle-port設計を2重化すれば無条件に動くことを意味しない。各ユニットのread／write bank集合、入力分割、DMA／FIFO競合、外部帯域を再検査する必要がある。18-bank 1R1W register-exchangeは、single-port baselineとは別の候補である。
+このモデルは現行のsingle-port設計を2重化すれば無条件に動くことを意味しない。各ユニットのread／write bank集合、入力分割、DMA／FIFO競合、外部帯域を再検査する必要がある。`M=18` bank・1R1W register-exchangeは、single-port baselineとは別の候補である。

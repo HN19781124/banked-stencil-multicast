@@ -2,7 +2,7 @@
 
 [English](fpga-linebuffer-comparison.en.md) · [简体中文](fpga-linebuffer-comparison.zh-Hans.md) · 日本語（正本）
 
-この資料は、3-tap／4-laneの同一ワークロードをFPGAへ実装する場合に、一般的なラインバッファ方式と本リポジトリのbanked multicast方式を同じ物差しで比較するための契約である。`reference/two_d_dataflow.py`による2D出力一致シミュレーションは、4-byte複素サンプルを整数ペアで扱うreferenceとして実行可能である。FP16のbit-exact丸めは既存のRTL検証契約に分離している。比較用RTLと特定FPGAの配置配線はまだ実行していないため、資源・Fmax・電力の「傾向」は設計上の仮説である。
+この資料は、3-tap／4-laneの同一ワークロードをFPGAへ実装する場合に、一般的なラインバッファ方式と本リポジトリのbanked multicast方式を同じ物差しで比較するための契約である。ここでは`N`をレーン数、`M`を物理SRAM bank数として固定し、現行1D baselineを`N=4`／`T=3`／`M=12`とする。`reference/two_d_dataflow.py`による2D出力一致シミュレーションは、4-byte複素サンプルを整数ペアで扱うreferenceとして実行可能である。FP16のbit-exact丸めは既存のRTL検証契約に分離している。比較用RTLと特定FPGAの配置配線はまだ実行していないため、資源・Fmax・電力の「傾向」は設計上の仮説である。
 
 ## 1. 比較する二つのデータ経路
 
@@ -19,7 +19,7 @@ flowchart LR
     end
 
     subgraph BM[banked multicast方式]
-        BM0[静的bank配置<br/>12-bank baseline]
+        BM0[静的bank配置<br/>M=12 bank baseline]
         BM1[6 unique reads]
         BM2[固定multicast]
         BM3[4-lane MAC]
@@ -128,4 +128,4 @@ FPGA BRAMが2ポートであっても、本方式のsingle-port bank条件を検
 
 完全な入力条件、アクセス数、bank conflict検査数は[2D比較JSON証跡](../../physical/evidence/2d-dataflow-comparison-1024.json)に保存している。
 
-現行リポジトリで完了しているのはbanked multicast側の`N=4` reference／RTL／formalと、両方式の2D reference出力一致・cycle指標の基準化までである。line-buffer RTL、vendor P&R、実ボード、両方式のFPGA同一条件結果は未実装・未測定であり、現行baselineの性能保証には含めない。
+現行リポジトリで完了しているのはbanked multicast側の`N=4`／`M=12` reference／RTL／formalと、両方式の2D reference出力一致・cycle指標の基準化までである。line-buffer RTL、vendor P&R、実ボード、両方式のFPGA同一条件結果は未実装・未測定であり、現行baselineの性能保証には含めない。

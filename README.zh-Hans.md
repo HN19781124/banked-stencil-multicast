@@ -6,7 +6,7 @@
 
 > 面向无冲突流式 stencil 的防御性公开与可执行参考设计：采用单端口 banked SRAM、重叠读取消除、固定 multicast 配送和 ping-pong 缓冲。
 
-本仓库记录面向规则复数局部 stencil 工作负载的**可编程流式协处理器展望**。已测量的 N=4 数据通路与尚未实现的扩展、控制面候选明确分开。
+本仓库记录面向规则复数局部 stencil 工作负载的**可编程流式协处理器展望**。`N` 表示并行 lane 数，`M` 表示物理 SRAM bank 数；在设计空间说明中严格分开这两个符号。已测量的 N=4 数据通路与尚未实现的扩展、控制面候选明确分开。
 
 ## 状态与范围
 
@@ -29,7 +29,7 @@ flowchart LR
     end
 
     subgraph DATA["数据面"]
-        IN["输入流／DMA边界"] --> SRAM["静态 SRAM<br/>12 bank／single-port"]
+        IN["输入流／DMA边界"] --> SRAM["静态 SRAM<br/>M=12 bank／single-port"]
         SRAM --> UNIQUE["unique samples"]
         UNIQUE --> MCAST["固定 multicast 网络"]
         MCAST --> MAC["复数 MAC lanes<br/>N=4 基线"]
@@ -60,7 +60,7 @@ flowchart LR
 
 ## 特定空间用途目标（未评估）
 
-一个候选评估场景是：在解调和解码之前，对低轨卫星接收的复数 I/Q（或等价复数 sample）执行规则局部滤波、相关或均衡预处理。光学捕获与跟踪、调制解调器选择、FEC／解码、飞行控制、推进、载人安全、深空通信和整星 qualification 不在范围内。已测量的 N=4 基线和 18-bank 1R1W 候选都没有 flight、辐射或热真空 qualification。双端口存储器可以放宽 access-slot 约束，但不会自动解决 SRAM 辐射特性或散热问题。
+一个候选评估场景是：在解调和解码之前，对低轨卫星接收的复数 I/Q（或等价复数 sample）执行规则局部滤波、相关或均衡预处理。光学捕获与跟踪、调制解调器选择、FEC／解码、飞行控制、推进、载人安全、深空通信和整星 qualification 不在范围内。已测量的 N=4 基线和 `M=18` 1R1W 候选都没有 flight、辐射或热真空 qualification。双端口存储器可以放宽 access-slot 约束，但不会自动解决 SRAM 辐射特性或散热问题。
 
 | 评估项目 | 该场景的检查项 | 当前状态 |
 |---|---|---|
@@ -75,7 +75,7 @@ flowchart LR
 
 ~~~mermaid
 flowchart LR
-    C[18-bank 1R1W 候选<br/>复数 I/Q 预处理] --> R[辐射]
+    C[M=18 bank／1R1W 候选<br/>复数 I/Q 预处理] --> R[辐射]
     C --> T[热真空与功耗]
     C --> L[BER / EVM / 同步 / link margin]
     C --> D[确定性与故障恢复]
