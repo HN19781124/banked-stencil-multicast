@@ -1,5 +1,7 @@
 # ROMBASIC／GPU統合の参考案
 
+[English](rombasic-gpu-integration.en.md) · [简体中文](rombasic-gpu-integration.zh-Hans.md) · 日本語（正本）
+
 > [!NOTE]
 > 本文書は将来の統合候補を保存する参考付録です。公開済み12-bank／4-way baselineの必須構成でも、検証済み性能の主張でもありません。
 

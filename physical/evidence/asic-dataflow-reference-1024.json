@@ -1,0 +1,142 @@
+{
+  "generated_at": "2026-08-31T14:27:18.592139+00:00",
+  "model": "reference-only ASIC dataflow comparison; no line-buffer RTL/P&R or power sign-off",
+  "input": {
+    "logical_width": 1024,
+    "logical_height": 1024,
+    "input_width": 1026,
+    "stream_width": 1028,
+    "input_height": 1026,
+    "lanes": 4,
+    "taps": 3,
+    "sample_bytes": 4,
+    "seed": 1312961026,
+    "kernel": [
+      [
+        [
+          1,
+          0
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          0,
+          -1
+        ]
+      ],
+      [
+        [
+          0,
+          2
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          -2,
+          0
+        ]
+      ],
+      [
+        [
+          -1,
+          0
+        ],
+        [
+          0,
+          -1
+        ],
+        [
+          1,
+          1
+        ]
+      ]
+    ]
+  },
+  "correctness": {
+    "outputs_equal": true,
+    "output_samples": 1048576,
+    "output_digest": "92f25b9ca748fe02a4d7d14a7fc0df7d36507f6af090dc1f25f175414de39ba9"
+  },
+  "cycle_reference": {
+    "line_buffer_end_to_end_cycles": 263683,
+    "banked_multicast_end_to_end_cycles": 525827,
+    "banked_preloaded_core_cycles": 262145,
+    "banked_load_and_compute_overlap_cycles": 263682
+  },
+  "activity": {
+    "line_buffer": {
+      "name": "line-buffer",
+      "storage_reads": 2097152,
+      "storage_writes": 1054728,
+      "storage_accesses": 3151880,
+      "storage_read_bytes": 8388608,
+      "storage_write_bytes": 4218912,
+      "logical_window_values": 9437184,
+      "multicast_deliveries": 0,
+      "bank_count": null,
+      "storage_reads_per_output": 2.0,
+      "storage_writes_per_output": 1.0058670043945312,
+      "storage_accesses_per_output": 3.0058670043945312,
+      "logical_window_values_per_output": 9.0,
+      "multicast_deliveries_per_output": 0.0
+    },
+    "banked_multicast": {
+      "name": "banked-multicast",
+      "storage_reads": 4718592,
+      "storage_writes": 1054728,
+      "storage_accesses": 5773320,
+      "storage_read_bytes": 18874368,
+      "storage_write_bytes": 4218912,
+      "logical_window_values": 9437184,
+      "multicast_deliveries": 9437184,
+      "bank_count": 36,
+      "storage_reads_per_output": 4.5,
+      "storage_writes_per_output": 1.0058670043945312,
+      "storage_accesses_per_output": 5.505867004394531,
+      "logical_window_values_per_output": 9.0,
+      "multicast_deliveries_per_output": 9.0
+    }
+  },
+  "power": {
+    "status": "not_calibrated",
+    "absolute_power_mw": null,
+    "energy_per_output_pj": null,
+    "reason": "requires the same ASIC PDK, SRAM macro views, clock/activity, voltage, and physical implementation for both paths",
+    "common_terms": [
+      "complex MAC and coefficient activity",
+      "input/output interface activity",
+      "reset and control baseline"
+    ],
+    "path_specific_terms": {
+      "line_buffer": [
+        "line-buffer SRAM read/write energy",
+        "window-register shift and toggle energy",
+        "line-buffer control and mux energy"
+      ],
+      "banked_multicast": [
+        "banked SRAM read/write energy",
+        "multicast wire/fan-out energy",
+        "bank address and conflict-free schedule logic energy"
+      ]
+    },
+    "symbolic_energy": {
+      "line_buffer": "R_lb*e_sram_read + W_lb*e_sram_write + S_lb*e_window_shift + C*e_common",
+      "banked_multicast": "R_bm*e_sram_read + W_bm*e_sram_write + F_bm*e_multicast_fanout + C*e_common"
+    }
+  },
+  "comparison_scope": {
+    "same_workload": true,
+    "same_complex_stencil": true,
+    "same_sample_bytes": 4,
+    "single_port_condition": "must be held equal or explicitly reported; line-buffer storage banking cannot silently use extra ports",
+    "banked_overlap_and_repeated_pass_storage": "active/prefetch A/B buffers plus Halo capacity must be reserved when load/compute overlap or multiple passes are required; not included in the activity-only power result",
+    "line_buffer_storage_scope": "rows-in-flight and window state only in this reference; implementation-specific capacity remains separate",
+    "line_buffer_stall_scope": "reference uses a no-stall/backpressure-free upper bound; an implementation may block on SRAM/BRAM port conflicts, line/row fill, tail/Halo boundaries, or downstream backpressure; such stalls are not in cycle or activity counts",
+    "numeric_result_scope": "cycle and activity values are reference counters under the regular no-stall assumption, not ASIC timing or throughput measurements",
+    "physical_signoff": false
+  }
+}

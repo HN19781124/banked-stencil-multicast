@@ -2,11 +2,10 @@
 
 ## Sliding-window buffer から unique-sample multicast へ
 
-> This is a conceptual explanation of the representation used by the
-> repository's measured `N=4` baseline. It is not a new verification result
-> and does not claim that every physical implementation can eliminate line or
-> plane storage. The set-based formulation itself extends algebraically to
-> regular 2D and 3D tiles.
+> 本稿は、リポジトリの実測 `N=4` baselineで用いるデータ表現を説明する
+> 概念資料です。新しい検証結果や、すべての物理実装でline／plane storageを
+> 省略できるという主張ではありません。集合化の定式化は、規則的な2D／3D
+> tileへ代数的に拡張できます。
 
 > English: [stencil-window-reframing.en.md](stencil-window-reframing.en.md)<br>
 > 简体中文: [stencil-window-reframing.zh-Hans.md](stencil-window-reframing.zh-Hans.md)

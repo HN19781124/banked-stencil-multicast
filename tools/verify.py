@@ -94,6 +94,50 @@ def main() -> int:
             "schedule-reference",
             [sys.executable, "-B", "reference/bank_schedule.py"],
         ),
+        run_check(
+            "peripheral-schedule",
+            [sys.executable, "-B", "-m", "reference.peripheral_schedule"],
+        ),
+        run_check(
+            "2d-dataflow-comparison",
+            [
+                sys.executable,
+                "-B",
+                "tools/compare_2d_dataflows.py",
+                "--width",
+                "64",
+                "--height",
+                "32",
+                "--report",
+                "build/2d-dataflow-comparison.json",
+            ],
+        ),
+        run_check(
+            "power-scaling-estimate",
+            [
+                sys.executable,
+                "-B",
+                "tools/estimate_power_scaling.py",
+                "--units",
+                "1,2",
+                "--report",
+                "build/power-scaling-estimate.json",
+            ],
+        ),
+        run_check(
+            "asic-dataflow-reference",
+            [
+                sys.executable,
+                "-B",
+                "tools/compare_asic_dataflows.py",
+                "--width",
+                "64",
+                "--height",
+                "32",
+                "--report",
+                "build/asic-dataflow-comparison.json",
+            ],
+        ),
     ]
     vector_check = run_check(
         "complex-mac-vector-generation",

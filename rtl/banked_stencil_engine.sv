@@ -276,6 +276,98 @@ module banked_stencil_engine #(
         end
     endgenerate
 
+`ifndef SYNTHESIS
+    function automatic integer input_bank_index_for_assert;
+        input integer x;
+        input integer y;
+        input integer slot;
+        begin
+            input_bank_index_for_assert =
+                (x + slot + (2 * y)) % BANK_COUNT;
+        end
+    endfunction
+
+    function automatic [BANK_COUNT - 1:0] input_write_mask_for_assert;
+        input integer x;
+        input integer y;
+        integer slot;
+        integer bank_index_value;
+        begin
+            input_write_mask_for_assert = {BANK_COUNT{1'b0}};
+            for (slot = 0; slot < 4; slot = slot + 1) begin
+                bank_index_value = input_bank_index_for_assert(x, y, slot);
+                input_write_mask_for_assert[bank_index_value] = 1'b1;
+            end
+        end
+    endfunction
+
+    integer assert_input_slot_a;
+    integer assert_input_slot_b;
+
+    // The input-side proof is deliberately local to the synchronous FIFO
+    // boundary: one accepted beat carries four adjacent samples and is drained
+    // into four distinct banks in one STATE_LOAD cycle.
+    always @(posedge clk_i) begin
+        if (reset_n_i) begin
+            assert (input_fifo_occupancy <= FIFO_DEPTH)
+                else $fatal(1, "engine input FIFO occupancy overflow: %0d",
+                    input_fifo_occupancy);
+
+            if (s_axis_tvalid_i && input_allowed && input_fifo_source_ready) begin
+                assert (input_fifo_occupancy < FIFO_DEPTH)
+                    else $fatal(1, "engine input FIFO accepted a beat while full");
+            end
+            if (input_fifo_valid && input_fifo_ready) begin
+                assert (input_fifo_occupancy > 0)
+                    else $fatal(1, "engine input FIFO drained while empty");
+
+                for (assert_input_slot_a = 0;
+                        assert_input_slot_a < 4;
+                        assert_input_slot_a = assert_input_slot_a + 1) begin
+                    for (assert_input_slot_b = assert_input_slot_a + 1;
+                            assert_input_slot_b < 4;
+                            assert_input_slot_b = assert_input_slot_b + 1) begin
+                        assert (
+                            input_bank_index_for_assert(
+                                load_x_q, load_row_q, assert_input_slot_a
+                            ) != input_bank_index_for_assert(
+                                load_x_q, load_row_q, assert_input_slot_b
+                            )
+                        ) else $fatal(
+                            1,
+                            "input bank collision row=%0d x=%0d slots=%0d,%0d",
+                            load_row_q,
+                            load_x_q,
+                            assert_input_slot_a,
+                            assert_input_slot_b
+                        );
+                    end
+                end
+                assert (
+                    memory_enable === input_write_mask_for_assert(
+                        load_x_q, load_row_q
+                    )
+                ) else $fatal(
+                    1,
+                    "input write-enable mask mismatch row=%0d x=%0d",
+                    load_row_q,
+                    load_x_q
+                );
+                assert (
+                    memory_write === input_write_mask_for_assert(
+                        load_x_q, load_row_q
+                    )
+                ) else $fatal(
+                    1,
+                    "input write mask mismatch row=%0d x=%0d",
+                    load_row_q,
+                    load_x_q
+                );
+            end
+        end
+    end
+`endif
+
     stencil_multicast #(.DATA_WIDTH(32)) multicast (
         .unique_samples_i(unique_samples_q),
         .lane_samples_o(lane_samples)

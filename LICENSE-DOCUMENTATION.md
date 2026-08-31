@@ -2,7 +2,8 @@
 
 Copyright © 2026 Hiroshi Namiki.
 
-Unless otherwise noted, `README.md`, `VALIDATION.md`, Markdown files under
+Unless otherwise noted, `README.md`, `README.en.md`, `README.zh-Hans.md`,
+`VALIDATION.md`, Markdown files under
 `docs/`, `manufacturing/`, and `physical/evidence/`, and their original diagrams are licensed
 under the [Creative Commons Attribution 4.0 International License][cc-by-4.0]
 (CC BY 4.0).

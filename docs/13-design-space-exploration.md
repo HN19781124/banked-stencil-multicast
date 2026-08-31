@@ -53,6 +53,8 @@ complex MACは、複素乗算4乗算＋加算と累積加算を合わせた8 rea
 
 基準N=4のRTL性能レポートにあるread 2.4 GB/s、write 1.6 GB/s、合計4.0 GB/sおよびserialized 3.2 GFLOP/sは、この一次モデルと一致します。一致はモデルの校正であって、N=16の物理性能を保証するものではありません。
 
+ユニットを横に複製したときの電力余裕は、同じ4 MHzのOpenROAD見積をアンカーにした別の一次モデルで扱います。[`tools/estimate_power_scaling.py`](../tools/estimate_power_scaling.py)は、shared logic、追加配線、外部帯域、ユニット間backpressureを引数として露出し、1／2ユニットのpower、理想throughput、energy／result、performance／Wを出力します。既定値で2ユニットは22.868 mWですが、これは実電力・熱余裕・single-port無衝突性の証明ではありません。
+
 ## 4. N=16を尖った候補として検証へ進める理由
 
 N=16は、削減率60%を超えながら、容量144 KiBと48 endpointの境界に収まる最大候補です。N=24以降は理想スループットが増える一方、bank数、配線endpoint、SRAM容量が同時に増え、現在の4-lane physical runからの外挿が大きくなります。したがって、N=16を「最終最適」と断定せず、予算境界上の尖った検証ターゲットとして固定します。

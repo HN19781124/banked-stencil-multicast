@@ -21,6 +21,8 @@ class ManufacturingDocsTests(unittest.TestCase):
     def test_required_handoff_documents_exist(self) -> None:
         required = {
             "README.md",
+            "README.en.md",
+            "README.zh-Hans.md",
             "01-product-requirements.md",
             "02-numerical-specification.md",
             "03-architecture-and-interfaces.md",
@@ -94,6 +96,8 @@ class ManufacturingDocsTests(unittest.TestCase):
     def test_local_markdown_links_resolve(self) -> None:
         documents = [
             ROOT / "README.md",
+            ROOT / "README.en.md",
+            ROOT / "README.zh-Hans.md",
             ROOT / "VALIDATION.md",
             ROOT / "LICENSE-DOCUMENTATION.md",
             *DOCS.rglob("*.md"),

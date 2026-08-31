@@ -9,8 +9,10 @@ from reference.peripheral_schedule import (
     boundary_issue,
     compensated_write_phase,
     cross_row_cycle_plan,
+    input_write_banks,
     padded_row,
     validate_cross_row_access,
+    validate_input_write_banks,
     validate_row_edges,
 )
 
@@ -40,6 +42,14 @@ class PeripheralScheduleTests(unittest.TestCase):
 
     def test_row_edge_family(self) -> None:
         validate_row_edges(max_width=257, rows=12)
+
+    def test_input_beat_maps_to_distinct_banks(self) -> None:
+        self.assertEqual((8, 9, 10, 11), input_write_banks(4, y=2))
+        validate_input_write_banks(cycles=1_024, rows=32)
+
+    def test_input_beat_requires_lane_alignment(self) -> None:
+        with self.assertRaises(ValueError):
+            input_write_banks(1)
 
     def test_same_row_compensation_preserves_buffer_phases(self) -> None:
         self.assertEqual(PHASE_B, compensated_write_phase(PHASE_A, 4, 4))

@@ -89,5 +89,23 @@ module axis_fifo #(
             $fatal(1, "axis_fifo DEPTH must be positive");
         end
     end
+
+    // Simulation-time safety checks for the ready/valid FIFO contract.  These
+    // checks do not claim an external DMA protocol or CDC proof; they guard the
+    // local synchronous FIFO boundary used by the reference engine.
+    always @(posedge clk_i) begin
+        if (reset_n_i) begin
+            assert (count_q <= DEPTH)
+                else $fatal(1, "axis_fifo occupancy overflow: %0d", count_q);
+            if (push) begin
+                assert (count_q < DEPTH)
+                    else $fatal(1, "axis_fifo push accepted while full");
+            end
+            if (pop) begin
+                assert (count_q > 0)
+                    else $fatal(1, "axis_fifo pop accepted while empty");
+            end
+        end
+    end
 `endif
 endmodule

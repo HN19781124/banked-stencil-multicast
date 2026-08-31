@@ -1,0 +1,111 @@
+{
+  "generated_at": "2026-08-31T14:27:18.369110+00:00",
+  "model": "reference-level 2D comparison; not FPGA timing",
+  "comparison_scope": {
+    "line_buffer_stall_model": "no-stall/backpressure-free upper bound; an implementation may block on SRAM/BRAM/SRL port conflicts, line/row fill, tail/Halo boundaries, or downstream backpressure",
+    "numeric_result_scope": "cycle and output values are reference counters under the regular no-stall assumption, not FPGA timing or throughput measurements"
+  },
+  "input": {
+    "logical_width": 1024,
+    "logical_height": 1024,
+    "input_width": 1026,
+    "stream_width": 1028,
+    "input_height": 1026,
+    "lanes": 4,
+    "taps": 3,
+    "sample_bytes": 4,
+    "seed": 1312961026,
+    "kernel": [
+      [
+        [
+          1,
+          0
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          0,
+          -1
+        ]
+      ],
+      [
+        [
+          0,
+          2
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          -2,
+          0
+        ]
+      ],
+      [
+        [
+          -1,
+          0
+        ],
+        [
+          0,
+          -1
+        ],
+        [
+          1,
+          1
+        ]
+      ]
+    ]
+  },
+  "comparison": {
+    "outputs_equal": true,
+    "output_samples": 1048576,
+    "output_beats": 262144,
+    "output_digest": "92f25b9ca748fe02a4d7d14a7fc0df7d36507f6af090dc1f25f175414de39ba9",
+    "line_buffer_end_to_end_cycles": 263683,
+    "banked_multicast_end_to_end_cycles": 525827,
+    "banked_preloaded_core_cycles": 262145,
+    "banked_load_and_compute_overlap_cycles": 263682
+  },
+  "line_buffer": {
+    "name": "line-buffer",
+    "input_beats": 263682,
+    "output_beats": 262144,
+    "preload_cycles": 0,
+    "core_cycles": 262145,
+    "end_to_end_cycles": 263683,
+    "first_output_cycle": 516,
+    "last_output_cycle": 263682,
+    "steady_output_interval": 1.0039024501894005,
+    "storage_reads": 2097152,
+    "storage_writes": 1054728,
+    "logical_window_values": 9437184,
+    "multicast_deliveries": 0,
+    "bank_count": null,
+    "bank_conflict_checks": 0,
+    "fifo_max_occupancy": 0,
+    "output_digest": "92f25b9ca748fe02a4d7d14a7fc0df7d36507f6af090dc1f25f175414de39ba9"
+  },
+  "banked_multicast": {
+    "name": "banked-multicast",
+    "input_beats": 263682,
+    "output_beats": 262144,
+    "preload_cycles": 263682,
+    "core_cycles": 262145,
+    "end_to_end_cycles": 525827,
+    "first_output_cycle": 263683,
+    "last_output_cycle": 525826,
+    "steady_output_interval": 1.0,
+    "storage_reads": 4718592,
+    "storage_writes": 1054728,
+    "logical_window_values": 9437184,
+    "multicast_deliveries": 9437184,
+    "bank_count": 36,
+    "bank_conflict_checks": 525826,
+    "fifo_max_occupancy": 0,
+    "output_digest": "92f25b9ca748fe02a4d7d14a7fc0df7d36507f6af090dc1f25f175414de39ba9"
+  }
+}

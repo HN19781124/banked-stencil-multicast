@@ -1,0 +1,105 @@
+{
+  "model": "first-order duplicated-unit power scaling; not physical sign-off",
+  "source": {
+    "power_anchor": "physical/evidence/RTL-PERFORMANCE-REPORT.md",
+    "power_anchor_condition": "OpenROAD estimate, nominal TT, exploratory 4 MHz run",
+    "power_anchor_components_mw": {
+      "internal": 7.938,
+      "switching": 2.644,
+      "leakage": 0.852,
+      "total": 11.434
+    }
+  },
+  "assumptions": {
+    "ideal_independent_unit_throughput_scaling": true,
+    "same_clock_mhz": 4.0,
+    "off_chip_bandwidth_saturation_modeled": false,
+    "cross_unit_backpressure_modeled": false,
+    "single_port_bank_conflict_recheck": "required for each duplicated unit; not inferred by this power model",
+    "physical_power_or_thermal_signoff": false
+  },
+  "power_model": {
+    "unit_dynamic_mw": 10.582,
+    "unit_leakage_mw": 0.852,
+    "shared_static_mw": 0.0,
+    "shared_dynamic_mw": 0.0,
+    "interconnect_mw_per_extra_unit": 0.0,
+    "unit_total_mw": 11.434000000000001
+  },
+  "traffic_anchor": {
+    "clock_mhz": 4.0,
+    "valid_lane_results": 51,
+    "nostall_cycles": 71,
+    "stress_cycles": 81
+  },
+  "power_budget_mw": null,
+  "scenarios": [
+    {
+      "name": "nostall",
+      "transaction_cycles": 71,
+      "baseline_throughput_mresults_s": 2.8732394366197185,
+      "estimates": [
+        {
+          "units": 1,
+          "power_mw": 11.434000000000001,
+          "power_ratio_to_one": 1.0,
+          "ideal_throughput_mresults_s": 2.8732394366197185,
+          "throughput_ratio_to_one": 1.0,
+          "energy_nj_per_result": 3.9794803921568627,
+          "energy_ratio_to_one": 1.0,
+          "performance_mresults_s_per_w": 251.2890883872414,
+          "power_budget_mw": null,
+          "budget_headroom_mw": null,
+          "fits_budget": null
+        },
+        {
+          "units": 2,
+          "power_mw": 22.868000000000002,
+          "power_ratio_to_one": 2.0,
+          "ideal_throughput_mresults_s": 5.746478873239437,
+          "throughput_ratio_to_one": 2.0,
+          "energy_nj_per_result": 3.9794803921568627,
+          "energy_ratio_to_one": 1.0,
+          "performance_mresults_s_per_w": 251.2890883872414,
+          "power_budget_mw": null,
+          "budget_headroom_mw": null,
+          "fits_budget": null
+        }
+      ]
+    },
+    {
+      "name": "stress",
+      "transaction_cycles": 81,
+      "baseline_throughput_mresults_s": 2.5185185185185186,
+      "estimates": [
+        {
+          "units": 1,
+          "power_mw": 11.434000000000001,
+          "power_ratio_to_one": 1.0,
+          "ideal_throughput_mresults_s": 2.5185185185185186,
+          "throughput_ratio_to_one": 1.0,
+          "energy_nj_per_result": 4.5399705882352945,
+          "energy_ratio_to_one": 1.0,
+          "performance_mresults_s_per_w": 220.26574414190296,
+          "power_budget_mw": null,
+          "budget_headroom_mw": null,
+          "fits_budget": null
+        },
+        {
+          "units": 2,
+          "power_mw": 22.868000000000002,
+          "power_ratio_to_one": 2.0,
+          "ideal_throughput_mresults_s": 5.037037037037037,
+          "throughput_ratio_to_one": 2.0,
+          "energy_nj_per_result": 4.5399705882352945,
+          "energy_ratio_to_one": 1.0,
+          "performance_mresults_s_per_w": 220.26574414190296,
+          "power_budget_mw": null,
+          "budget_headroom_mw": null,
+          "fits_budget": null
+        }
+      ]
+    }
+  ],
+  "generated_at": "2026-08-31T14:02:39.130239+00:00"
+}

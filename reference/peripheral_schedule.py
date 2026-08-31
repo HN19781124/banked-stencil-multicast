@@ -140,6 +140,38 @@ def boundary_issue(
     return result
 
 
+def input_write_banks(first_sample_x: int, y: int = 0) -> tuple[int, ...]:
+    """Return the four physical banks written by one accepted input beat.
+
+    The engine accepts one 128-bit beat containing four adjacent samples.  The
+    input-side load pointer is lane-aligned, so this helper models the exact
+    bank set used by ``STATE_LOAD`` for the baseline 12-bank mapping.
+    """
+
+    if first_sample_x < 0 or first_sample_x % LANE_COUNT:
+        raise ValueError("first_sample_x must be a non-negative lane-aligned coordinate")
+    if y < 0:
+        raise ValueError("y must be non-negative")
+    return tuple(
+        bank_index(first_sample_x + offset, y)
+        for offset in range(WRITE_COUNT)
+    )
+
+
+def validate_input_write_banks(cycles: int = 256, rows: int = 32) -> None:
+    """Check that every baseline input beat maps to four distinct banks."""
+
+    if cycles <= 0 or rows <= 0:
+        raise ValueError("cycles and rows must be positive")
+    for y in range(rows):
+        for cycle in range(cycles):
+            banks = input_write_banks(cycle * LANE_COUNT, y)
+            if len(set(banks)) != WRITE_COUNT:
+                raise AssertionError(
+                    f"input write-bank conflict at row={y} cycle={cycle}: {banks}"
+                )
+
+
 def compensated_write_phase(
     read_phase: int,
     read_y: int,
@@ -221,8 +253,10 @@ def validate_cross_row_access(cycles: int = 256, rows: int = 16) -> None:
 
 
 def main() -> None:
+    validate_input_write_banks()
     validate_row_edges()
     validate_cross_row_access()
+    print("input-load bank mapping: PASS")
     print("row-edge/Halo schedule: PASS")
     print("cross-row phase compensation: PASS")
 

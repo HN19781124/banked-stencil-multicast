@@ -48,6 +48,7 @@ module tb_banked_stencil_engine;
     integer cycle_count;
     integer done_count;
     integer error_count;
+    integer input_load_check_count;
     reg drive_enabled;
     reg [31:0] lfsr;
     reg output_stalled_q;
@@ -123,6 +124,12 @@ module tb_banked_stencil_engine;
             cycle_count = cycle_count + 1;
             if (done_pulse) done_count = done_count + 1;
             if (error_pulse) error_count = error_count + 1;
+
+            if ((device_under_test.state_q == 3'd1)
+                    && device_under_test.input_fifo_valid
+                    && device_under_test.input_fifo_ready) begin
+                input_load_check_count = input_load_check_count + 1;
+            end
 
             if (output_stalled_q && (!output_valid
                     || output_data !== stalled_data_q
@@ -208,6 +215,7 @@ module tb_banked_stencil_engine;
         cycle_count = 0;
         done_count = 0;
         error_count = 0;
+        input_load_check_count = 0;
         drive_enabled = 0;
         lfsr = 32'h4e423202;
         output_stalled_q = 0;
@@ -227,9 +235,14 @@ module tb_banked_stencil_engine;
         wait (done_count == 1);
         @(negedge clk);
         drive_enabled = 0;
-        if (busy || error_count != 0) begin
+        if (busy || error_count != 0 || send_index != INPUT_BEATS
+                || input_load_check_count != INPUT_BEATS) begin
             $fatal(1, "integrated engine did not complete cleanly");
         end
+        $display(
+            "input load assertions: PASS (%0d beats, FIFO ready/valid boundary)",
+            input_load_check_count
+        );
 
         pulse_start();
         @(negedge clk);
