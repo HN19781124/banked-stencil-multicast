@@ -103,6 +103,7 @@ python tools/compare_asic_dataflows.py --width 1024 --height 1024 --report build
 
 ## 相关文档
 
+- 派生应用记录：[Precision Clock / Timer](https://github.com/HN19781124/banked-precision-clock-multicast) ／ [Systolic Array](https://github.com/HN19781124/banked-systolic-multicast) ／ [TDOA Sensor Array](https://github.com/HN19781124/banked-tdoa-multicast) ／ [本地应用索引](applications/README.zh-Hans.md)
 - [Stencil 窗口重新表述（简体中文）](docs/concepts/stencil-window-reframing.zh-Hans.md) ／ [English](docs/concepts/stencil-window-reframing.en.md) ／ [日本語](docs/concepts/stencil-window-reframing.md)
 - [FPGA 比较契约](docs/concepts/fpga-and-simulation-comparison.zh-Hans.md) ／ [日本語](docs/concepts/fpga-and-simulation-comparison.md) ／ [English](docs/concepts/fpga-and-simulation-comparison.en.md)
 - [FPGA line-buffer 比较](docs/concepts/fpga-linebuffer-comparison.zh-Hans.md) ／ [日本語](docs/concepts/fpga-linebuffer-comparison.md) ／ [English](docs/concepts/fpga-linebuffer-comparison.en.md)

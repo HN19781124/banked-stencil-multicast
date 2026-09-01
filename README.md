@@ -51,6 +51,16 @@ ROMBASIC macro-instruction expansion layer（ROMBASICマクロ命令展開層）
 
 窓の重複がなぜデータ移動・重複読出し・bank競合として現れるのかは、独立した[ステンシル窓の再定式化（日本語）](docs/concepts/stencil-window-reframing.md)で図解しています。英語版は[English](docs/concepts/stencil-window-reframing.en.md)、簡体字版は[简体中文](docs/concepts/stencil-window-reframing.zh-Hans.md)です。
 
+## 応用例
+
+既存コアの汎用性を、以下の独立した派生参照repoで記録します。共通コアのRTL・性能証拠は変更せず、参照モデル＋再現テストで応用境界を示します。
+
+- [Precision Clock / Timer](https://github.com/HN19781124/banked-precision-clock-multicast)
+- [Systolic Array](https://github.com/HN19781124/banked-systolic-multicast)
+- [TDOA Sensor Array](https://github.com/HN19781124/banked-tdoa-multicast)
+
+このrepo内の[`applications/README.md`](applications/README.md)には、対応するローカルスナップショットと3応用の固定ケースを残しています。現時点の数値はすべてreference-onlyです。
+
 ## 大規模な規則データで効く理由
 
 - 隣接する`N`レーンと`T` tapの窓は、論理要求`N*T`個に対して`U=N+T-1`個のunique sampleだけを必要とします。

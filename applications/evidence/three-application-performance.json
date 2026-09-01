@@ -1,0 +1,51 @@
+{
+  "applications": [
+    {
+      "application": "precision-clock",
+      "broadcast_count": 1024,
+      "calibration_error_fs": 0,
+      "common_tick_interval_fs": 10000000,
+      "corrected_skew_fs": 0,
+      "lane_count": 4,
+      "period_fs": 10000000,
+      "raw_route_skew_fs": 52,
+      "scope": "reference-only",
+      "tick_count": 1024,
+      "timestamp_count": 4096
+    },
+    {
+      "application": "systolic-array",
+      "input_read_reduction_factor": 4.0,
+      "issue_cycles": 16,
+      "lane_count": 4,
+      "mac_operations": 64,
+      "multicast_deliveries": 64,
+      "output_digest": "65c7cf00a7c8cd19b7b31b7d4bee3daffe253259f5d4feb320056b61b1358aa7",
+      "replicated_input_reads": 64,
+      "scope": "reference-only",
+      "step_count": 16,
+      "storage_reads_saved": 48,
+      "unique_input_reads": 16
+    },
+    {
+      "application": "tdoa-sensor",
+      "corrected_tdoa_digest": "326aaeba1919c4a0f52480aff4301ed5a29b7d84b03e8699f397585eaafe45f4",
+      "event_count": 256,
+      "pair_count": 6,
+      "pairwise_measurements": 1536,
+      "physical_tdoa_span_fs": 112,
+      "raw_route_skew_fs": 52,
+      "residual_route_error_fs": 0,
+      "scope": "reference-only",
+      "sensor_count": 4
+    }
+  ],
+  "core_reference": {
+    "bank_count": 12,
+    "lane_count": 4,
+    "note": "application metrics do not replace core RTL or physical sign-off",
+    "tap_count": 3
+  },
+  "schema_version": 1,
+  "scope": "reference-only"
+}

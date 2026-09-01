@@ -103,6 +103,7 @@ The machine-readable reports preserve the assumptions for the numeric results, i
 
 ## Related documents
 
+- Derived application records: [Precision Clock / Timer](https://github.com/HN19781124/banked-precision-clock-multicast) ／ [Systolic Array](https://github.com/HN19781124/banked-systolic-multicast) ／ [TDOA Sensor Array](https://github.com/HN19781124/banked-tdoa-multicast) ／ [local application index](applications/README.en.md)
 - [Stencil-window reframing (English)](docs/concepts/stencil-window-reframing.en.md) ／ [简体中文](docs/concepts/stencil-window-reframing.zh-Hans.md) ／ [日本語](docs/concepts/stencil-window-reframing.md)
 - [FPGA comparison contract](docs/concepts/fpga-and-simulation-comparison.en.md) ／ [日本語](docs/concepts/fpga-and-simulation-comparison.md) ／ [简体中文](docs/concepts/fpga-and-simulation-comparison.zh-Hans.md)
 - [FPGA line-buffer comparison](docs/concepts/fpga-linebuffer-comparison.en.md) ／ [日本語](docs/concepts/fpga-linebuffer-comparison.md) ／ [简体中文](docs/concepts/fpga-linebuffer-comparison.zh-Hans.md)
